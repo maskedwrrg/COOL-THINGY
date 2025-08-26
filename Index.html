@@ -966,13 +966,31 @@
             }
 
             if (activeSessions[accessCode]) {
-                delete activeSessions[accessCode];
+                // Mark the session as kicked to prevent immediate re-login
+                activeSessions[accessCode].kicked = true;
+                activeSessions[accessCode].kickTime = new Date().toISOString();
                 saveToCloud();
-                document.getElementById('kick-result').innerHTML = `<div style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px;">User with access code ${accessCode} has been kicked</div>`;
+                
+                document.getElementById('kick-result').innerHTML = `<div style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px;">User with access code ${accessCode} has been kicked. They will be logged out on their next action.</div>`;
                 console.log(`User with access code ${accessCode} has been kicked`);
+                
+                // In a real implementation, you would have a server-side mechanism
+                // to force immediate logout, but for client-side only, we rely on
+                // the session check on each action
             } else {
                 document.getElementById('kick-result').innerHTML = `<div style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px;">No active session found for access code ${accessCode}</div>`;
             }
+        }
+
+        // Function to check if current user has been kicked
+        function checkIfKicked() {
+            if (currentSessionCode && activeSessions[currentSessionCode]?.kicked) {
+                // User has been kicked, force logout
+                alert("Your session has been terminated by an administrator.");
+                logout();
+                return true;
+            }
+            return false;
         }
 
         // Add logout button to the game interface
@@ -1011,6 +1029,11 @@
             activeSessions = cloudData.activeSessions || {};
             
             console.log('Access codes, revoked codes, last used data, and active sessions initialized');
+        }
+
+        // Check if the user has been kicked before any action
+        function checkUserSession() {
+            checkIfKicked();
         }
 
         // Call initialization
@@ -1086,6 +1109,9 @@
 
         // Place a bet
         function placeBet() {
+            // Check if user has been kicked
+            if (checkIfKicked()) return;
+            
             const betAmount = parseInt(betAmountInput.value);
             
             if (betAmount > gameState.balance) {
@@ -1150,6 +1176,9 @@
 
         // Cash out
         function cashOut() {
+            // Check if user has been kicked
+            if (checkIfKicked()) return;
+            
             if (!gameState.hasBet || gameState.cashedOut) return;
 
             gameState.cashedOut = true;
@@ -1356,6 +1385,9 @@
                         document.getElementById('main-container').style.display = 'block';
                         addLogoutButton();
                         initGame();
+                        
+                        // Start periodic session check
+                        setInterval(checkIfKicked, 10000); // Check every 10 seconds
                     } else {
                         document.getElementById('login-message').textContent = "Invalid access code. Please try again.";
                     }
@@ -1396,6 +1428,9 @@
                         gameState.isAdmin = true;
                         initGame();
                         updateAccessCodesTable();
+                        
+                        // Start periodic session check
+                        setInterval(checkIfKicked, 10000); // Check every 10 seconds
                     } else {
                         document.getElementById('login-message').textContent = "Invalid admin access code.";
                     }
