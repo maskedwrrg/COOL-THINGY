@@ -856,11 +856,50 @@
             return text.split('\n').filter(code => code.trim() !== '');
         }
 
-        // Initialize access codes and revoked codes
+        // Function to load last used timestamps from localStorage
+        function loadLastUsedFromStorage() {
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    const stored = localStorage.getItem('lastUsedData');
+                    return stored ? JSON.parse(stored) : {};
+                }
+            } catch (error) {
+                console.error('Failed to load last used data from localStorage:', error);
+            }
+            return {};
+        }
+
+        // Function to save last used timestamps to localStorage
+        function saveLastUsedToStorage() {
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    const lastUsedData = {};
+                    Object.keys(accessCodes).forEach(code => {
+                        if (accessCodes[code].lastUsed) {
+                            lastUsedData[code] = accessCodes[code].lastUsed;
+                        }
+                    });
+                    localStorage.setItem('lastUsedData', JSON.stringify(lastUsedData));
+                }
+            } catch (error) {
+                console.error('Failed to save last used data to localStorage:', error);
+            }
+        }
+
+        // Initialize access codes, revoked codes, and last used timestamps
         async function initializeCodes() {
             accessCodes = await fetchAccessCodes();
             revokedCodes = await fetchRevokedCodes();
-            console.log('Access codes and revoked codes initialized');
+            const lastUsedData = loadLastUsedFromStorage();
+            
+            // Merge last used data into access codes
+            Object.keys(accessCodes).forEach(code => {
+                if (lastUsedData[code]) {
+                    accessCodes[code].lastUsed = lastUsedData[code];
+                }
+            });
+            
+            console.log('Access codes, revoked codes, and last used data initialized');
         }
 
         // Call initialization
@@ -1258,6 +1297,9 @@
                     if (accessCodes[accessCode] && !revokedCodes.includes(accessCode)) {
                         // Update last used timestamp
                         accessCodes[accessCode].lastUsed = new Date().toISOString();
+                        // Save to localStorage
+                        saveLastUsedToStorage();
+                        
                         document.getElementById('login-container').style.display = 'none';
                         document.getElementById('main-container').style.display = 'block';
                         initGame();
@@ -1278,6 +1320,8 @@
                         // Update last used timestamp for admin code
                         if (accessCodes[accessCode]) {
                             accessCodes[accessCode].lastUsed = new Date().toISOString();
+                            // Save to localStorage
+                            saveLastUsedToStorage();
                         }
                         document.getElementById('login-container').style.display = 'none';
                         document.getElementById('main-container').style.display = 'block';
