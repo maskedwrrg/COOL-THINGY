@@ -638,10 +638,19 @@
 <body>
     <div id="login-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--background-gradient);">
         <div style="background: rgba(26, 26, 46, 0.9); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid var(--accent-color);">
-            <h2 style="color: var(--multiplier-color); margin-bottom: 20px; font-size: 2rem;">🔒 Premium Access Required</h2>
+            <h2 style="color: var(--multiplier-color); margin-bottom: 20px; font-size: 2rem;">🔒 Enter Access Code</h2>
             <p style="color: #cbd5e1; margin-bottom: 20px;">Enter your access code to play Moonshot Crash</p>
             <p style="color: #cbd5e1; margin-bottom: 20px;">Cost: $5 USD</p>
             <p style="color: #cbd5e1; margin-bottom: 20px;">If caught sharing login keys all who are involved will lose access and will recieve no refunds</p>
+            
+            <!-- Available Access Codes for Testing -->
+            <div style="background: rgba(15, 52, 96, 0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--accent-color);">
+                <h4 style="color: var(--multiplier-color); margin-bottom: 10px;">Available Test Codes:</h4>
+                <p style="color: #cbd5e1; margin: 5px 0; font-family: monospace;">REAZ</p>
+                <p style="color: #cbd5e1; margin: 5px 0; font-family: monospace;">TEST1</p>
+                <p style="color: #cbd5e1; margin: 5px 0; font-family: monospace;">TEST2</p>
+                <p style="color: #cbd5e1; font-size: 0.9rem; margin-top: 10px;">Admin Code: ADMIN123</p>
+            </div>
             <input type="text" id="access-code" placeholder="Enter access code" style="padding: 15px; border: 2px solid var(--accent-color); border-radius: 10px; background: rgba(26, 26, 46, 0.8); color: white; font-size: 1.1rem; width: 250px; margin-bottom: 15px;">
             <button id="login-button" style="padding: 15px 30px; background: linear-gradient(45deg, var(--bet-color), #3a86ff); border: none; border-radius: 10px; color: white; font-size: 1.1rem; cursor: pointer; font-weight: bold;">Login</button>
             <p id="login-message" style="color: var(--crash-color); margin-top: 15px; font-weight: bold;"></p>
