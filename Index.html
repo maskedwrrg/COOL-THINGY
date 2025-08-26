@@ -1246,10 +1246,7 @@
         // Initialize the game when page loads
         window.addEventListener('load', function() {
             // Ensure storage is initialized
-            if (!initializeStorage()) {
-                document.getElementById('login-message').textContent = "Storage initialization failed. Please refresh the page.";
-                return;
-            }
+            // Codes are initialized at the top level, no need to check here
 
             // Set up login functionality
             document.getElementById('login-button').addEventListener('click', async function() {
