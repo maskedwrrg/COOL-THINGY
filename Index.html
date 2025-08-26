@@ -972,7 +972,8 @@
                 saveToCloud();
                 
                 document.getElementById('kick-result').innerHTML = `<div style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px;">User with access code ${accessCode} has been kicked. They will be logged out on their next action.</div>`;
-                console.log(`User with access code ${accessCode} has been kicked`);
+                // Refresh the page to log out the user
+                location.reload();
                 
                 // In a real implementation, you would have a server-side mechanism
                 // to force immediate logout, but for client-side only, we rely on
