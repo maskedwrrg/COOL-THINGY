@@ -834,21 +834,45 @@
         const adminResults = document.getElementById('admin-results');
         const accessCodesBody = document.getElementById('access-codes-body');
 
-        // Initialize access codes storage
-        if (!localStorage.getItem('accessCodes')) {
-            // Add some default access codes for testing
-            const defaultAccessCodes = {
-                "REAZ": { status: "active", createdAt: new Date().toISOString() },
-                "TEST1": { status: "active", createdAt: new Date().toISOString() },
-                "TEST2": { status: "active", createdAt: new Date().toISOString() }
-            };
-            localStorage.setItem('accessCodes', JSON.stringify(defaultAccessCodes));
+        // Initialize access codes storage with proper error handling
+        function initializeStorage() {
+            try {
+                // Check if localStorage is available
+                if (typeof localStorage === 'undefined') {
+                    console.error('localStorage is not available');
+                    return false;
+                }
+                
+                // Initialize access codes
+                if (!localStorage.getItem('accessCodes')) {
+                    const defaultAccessCodes = {
+                        "REAZ": { status: "active", createdAt: new Date().toISOString() },
+                        "hazevr": { status: "active", createdAt: new Date().toISOString() },
+                        "TEST1": { status: "active", createdAt: new Date().toISOString() },
+                        "TEST2": { status: "active", createdAt: new Date().toISOString() }
+                    };
+                    localStorage.setItem('accessCodes', JSON.stringify(defaultAccessCodes));
+                    console.log('Default access codes initialized');
+                } else {
+                    console.log('Access codes already exist:', localStorage.getItem('accessCodes'));
+                }
+                
+                // Initialize IP tracking
+                if (!localStorage.getItem('ipTracking')) {
+                    localStorage.setItem('ipTracking', JSON.stringify({}));
+                    console.log('IP tracking initialized');
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Storage initialization failed:', error);
+                return false;
+            }
         }
 
-        // Initialize IP tracking storage
-        if (!localStorage.getItem('ipTracking')) {
-            localStorage.setItem('ipTracking', JSON.stringify({}));
-        }
+        // Call initialization and log result
+        const storageInitialized = initializeStorage();
+        console.log('Storage initialization:', storageInitialized ? 'Success' : 'Failed');
 
         // Function to get client IP (simplified for demo)
         function getClientIP() {
@@ -1276,44 +1300,68 @@
 
         // Initialize the game when page loads
         window.addEventListener('load', function() {
+            // Ensure storage is initialized
+            if (!initializeStorage()) {
+                document.getElementById('login-message').textContent = "Storage initialization failed. Please refresh the page.";
+                return;
+            }
+
             // Set up login functionality
             document.getElementById('login-button').addEventListener('click', function() {
-                const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
-                const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
-                
-                if (accessCodes[accessCode] && accessCodes[accessCode].status !== 'revoked') {
-                    // Track IP usage
-                    const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
-                    const clientIP = getClientIP();
+                try {
+                    const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
+                    const accessCodesStr = localStorage.getItem('accessCodes');
                     
-                    if (!ipTracking[accessCode]) ipTracking[accessCode] = [];
-                    if (!ipTracking[accessCode].includes(clientIP)) ipTracking[accessCode].push(clientIP);
+                    if (!accessCodesStr) {
+                        document.getElementById('login-message').textContent = "Access codes not found. Please refresh.";
+                        return;
+                    }
                     
-                    accessCodes[accessCode].lastUsed = new Date().toISOString();
-                    localStorage.setItem('ipTracking', JSON.stringify(ipTracking));
-                    localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
+                    const accessCodes = JSON.parse(accessCodesStr);
                     
-                    document.getElementById('login-container').style.display = 'none';
-                    document.getElementById('main-container').style.display = 'block';
-                    initGame();
-                    updateAccessCodesTable();
-                } else {
-                    document.getElementById('login-message').textContent = "Invalid access code. Please try again.";
+                    if (accessCodes[accessCode] && accessCodes[accessCode].status !== 'revoked') {
+                        // Track IP usage
+                        const ipTrackingStr = localStorage.getItem('ipTracking');
+                        const ipTracking = ipTrackingStr ? JSON.parse(ipTrackingStr) : {};
+                        const clientIP = getClientIP();
+                        
+                        if (!ipTracking[accessCode]) ipTracking[accessCode] = [];
+                        if (!ipTracking[accessCode].includes(clientIP)) ipTracking[accessCode].push(clientIP);
+                        
+                        accessCodes[accessCode].lastUsed = new Date().toISOString();
+                        localStorage.setItem('ipTracking', JSON.stringify(ipTracking));
+                        localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
+                        
+                        document.getElementById('login-container').style.display = 'none';
+                        document.getElementById('main-container').style.display = 'block';
+                        initGame();
+                        updateAccessCodesTable();
+                    } else {
+                        document.getElementById('login-message').textContent = "Invalid access code. Please try again.";
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    document.getElementById('login-message').textContent = "Login failed. Please refresh and try again.";
                 }
             });
 
             // Admin login
             document.getElementById('admin-login-button').addEventListener('click', function() {
-                const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
-                if (accessCode === 'ADMIN123') {
-                    document.getElementById('login-container').style.display = 'none';
-                    document.getElementById('main-container').style.display = 'block';
-                    document.getElementById('admin-panel').style.display = 'block';
-                    gameState.isAdmin = true;
-                    initGame();
-                    updateAccessCodesTable();
-                } else {
-                    document.getElementById('login-message').textContent = "Invalid admin access code.";
+                try {
+                    const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
+                    if (accessCode === 'ADMIN123') {
+                        document.getElementById('login-container').style.display = 'none';
+                        document.getElementById('main-container').style.display = 'block';
+                        document.getElementById('admin-panel').style.display = 'block';
+                        gameState.isAdmin = true;
+                        initGame();
+                        updateAccessCodesTable();
+                    } else {
+                        document.getElementById('login-message').textContent = "Invalid admin access code.";
+                    }
+                } catch (error) {
+                    console.error('Admin login error:', error);
+                    document.getElementById('login-message').textContent = "Admin login failed. Please refresh.";
                 }
             });
 
