@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moonshot Crash - Virtual Gambling Game</title>
+    <title>Moonshot Crash - Virtual Gambling Game with Access Management</title>
     <style>
         :root {
             --primary-color: #1a1a2e;
@@ -16,6 +16,11 @@
             --crash-color: #ef4444;
             --multiplier-color: #fbbf24;
             --background-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --admin-panel-bg: #2d3748;
+            --admin-panel-border: #4a5568;
+            --status-active: #d4edda;
+            --status-revoked: #f8d7da;
+            --ip-warning: #ffc107;
         }
 
         * {
@@ -33,7 +38,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -138,18 +143,9 @@
         }
 
         @keyframes flame {
-            0% { 
-                transform: translateX(-50%) scale(1) translateY(0);
-                opacity: 1;
-            }
-            50% { 
-                transform: translateX(-50%) scale(1.3) translateY(-5px);
-                opacity: 0.9;
-            }
-            100% { 
-                transform: translateX(-50%) scale(1.1) translateY(5px);
-                opacity: 0.8;
-            }
+            0% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1.3) translateY(-5px); opacity: 0.9; }
+            100% { transform: translateX(-50%) scale(1.1) translateY(5px); opacity: 0.8; }
         }
 
         .stars {
@@ -399,6 +395,120 @@
             opacity: 0.6;
         }
 
+        /* Admin Panel Styles */
+        .admin-panel {
+            background: var(--admin-panel-bg);
+            border: 2px solid var(--admin-panel-border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .admin-panel h2 {
+            color: var(--multiplier-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .admin-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(15, 52, 96, 0.4);
+            border-radius: 10px;
+        }
+
+        .admin-section h3 {
+            color: var(--rocket-color);
+            margin-bottom: 15px;
+        }
+
+        .admin-form-group {
+            margin-bottom: 15px;
+        }
+
+        .admin-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #cbd5e1;
+            font-weight: bold;
+        }
+
+        .admin-form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            background: rgba(26, 26, 46, 0.8);
+            color: var(--text-color);
+        }
+
+        .admin-btn {
+            background: linear-gradient(45deg, var(--bet-color), #3a86ff);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .admin-btn.danger {
+            background: linear-gradient(45deg, var(--crash-color), #dc2626);
+        }
+
+        .admin-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .admin-results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(26, 26, 46, 0.8);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--accent-color);
+        }
+
+        .admin-table th {
+            background: rgba(15, 52, 96, 0.6);
+            color: var(--text-color);
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .status.active {
+            background: var(--status-active);
+            color: #155724;
+        }
+
+        .status.revoked {
+            background: var(--status-revoked);
+            color: #721c24;
+        }
+
+        .ip-count {
+            background: var(--ip-warning);
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .game-container {
@@ -535,6 +645,11 @@
             <input type="text" id="access-code" placeholder="Enter access code" style="padding: 15px; border: 2px solid var(--accent-color); border-radius: 10px; background: rgba(26, 26, 46, 0.8); color: white; font-size: 1.1rem; width: 250px; margin-bottom: 15px;">
             <button id="login-button" style="padding: 15px 30px; background: linear-gradient(45deg, var(--bet-color), #3a86ff); border: none; border-radius: 10px; color: white; font-size: 1.1rem; cursor: pointer; font-weight: bold;">Login</button>
             <p id="login-message" style="color: var(--crash-color); margin-top: 15px; font-weight: bold;"></p>
+            
+            <!-- Admin Login Button -->
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--accent-color);">
+                <button id="admin-login-button" style="padding: 10px 20px; background: linear-gradient(45deg, #9f7aea, #6b46c1); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">Admin Access</button>
+            </div>
         </div>
     </div>
 
@@ -612,6 +727,57 @@
                 </div>
             </div>
         </div>
+
+        <!-- Admin Panel -->
+        <div class="admin-panel" id="admin-panel">
+            <h2>🔧 Access Management Panel</h2>
+            
+            <!-- Access Code Management Section -->
+            <div class="admin-section">
+                <h3>Access Code Management</h3>
+                <div class="admin-form-group">
+                    <label for="admin-access-code">Access Code:</label>
+                    <input type="text" id="admin-access-code" placeholder="Enter access code">
+                </div>
+                <button class="admin-btn" onclick="checkAccessCode()">Check Access Code</button>
+                <button class="admin-btn danger" onclick="revokeAccessCode()">Revoke Access Code</button>
+            </div>
+
+            <!-- IP Tracking Section -->
+            <div class="admin-section">
+                <h3>IP Address Tracking</h3>
+                <div class="admin-form-group">
+                    <label for="ip-search">Search by IP Address:</label>
+                    <input type="text" id="ip-search" placeholder="Enter IP address">
+                </div>
+                <button class="admin-btn" onclick="findIPUsage()">Find IP Usage</button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="admin-section">
+                <h3>Results</h3>
+                <div class="admin-results" id="admin-results"></div>
+            </div>
+
+            <!-- Access Codes Table -->
+            <div class="admin-section">
+                <h3>Active Access Codes</h3>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Access Code</th>
+                            <th>Status</th>
+                            <th>IP Addresses</th>
+                            <th>Last Used</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="access-codes-body">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div class="sound-toggle" id="sound-toggle">
@@ -633,7 +799,8 @@
             losses: 0,
             biggestWin: 0,
             history: [],
-            soundEnabled: true
+            soundEnabled: true,
+            isAdmin: false
         };
 
         // DOM elements
@@ -654,12 +821,39 @@
         const biggestWinElement = document.getElementById('biggest-win');
         const historyList = document.getElementById('history-list');
         const soundToggle = document.getElementById('sound-toggle');
+        const adminPanel = document.getElementById('admin-panel');
+        const adminResults = document.getElementById('admin-results');
+        const accessCodesBody = document.getElementById('access-codes-body');
+
+        // Initialize access codes storage
+        if (!localStorage.getItem('accessCodes')) {
+            // Add some default access codes for testing
+            const defaultAccessCodes = {
+                "REAZ": { status: "active", createdAt: new Date().toISOString() },
+                "TEST1": { status: "active", createdAt: new Date().toISOString() },
+                "TEST2": { status: "active", createdAt: new Date().toISOString() }
+            };
+            localStorage.setItem('accessCodes', JSON.stringify(defaultAccessCodes));
+        }
+
+        // Initialize IP tracking storage
+        if (!localStorage.getItem('ipTracking')) {
+            localStorage.setItem('ipTracking', JSON.stringify({}));
+        }
+
+        // Function to get client IP (simplified for demo)
+        function getClientIP() {
+            // In a real application, you'd get this from the server
+            // For demo purposes, we'll generate a random IP
+            return '192.168.' + Math.floor(Math.random() * 255) + '.' + Math.floor(Math.random() * 255);
+        }
 
         // Initialize the game
         function initGame() {
             createStars();
             updateUI();
             setupEventListeners();
+            updateAccessCodesTable();
         }
 
         // Create stars in the background
@@ -931,19 +1125,186 @@
             soundToggle.classList.toggle('muted', !gameState.soundEnabled);
         }
 
+        // Access Management Functions
+        function checkAccessCode() {
+            const accessCode = document.getElementById('admin-access-code').value.trim().toUpperCase();
+            if (!accessCode) {
+                showAdminResult('Please enter an access code', 'error');
+                return;
+            }
+
+            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
+            const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
+
+            if (accessCodes[accessCode]) {
+                if (accessCodes[accessCode].status === 'revoked') {
+                    showAdminResult('Access Revoked: This access code has been revoked.', 'error');
+                    return;
+                }
+
+                const ipCount = ipTracking[accessCode] ? ipTracking[accessCode].length : 0;
+                showAdminResult(`Access Granted: Code "${accessCode}" is active. IP Addresses: ${ipCount} ${ipCount > 1 ? '<span class="ip-count">Multiple IPs!</span>' : ''}`, 'success');
+                updateAccessCodesTable();
+            } else {
+                showAdminResult('Access code not found.', 'warning');
+            }
+        }
+
+        function revokeAccessCode() {
+            const accessCode = document.getElementById('admin-access-code').value.trim().toUpperCase();
+            if (!accessCode) {
+                showAdminResult('Please enter an access code to revoke', 'error');
+                return;
+            }
+
+            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
+            
+            if (accessCodes[accessCode]) {
+                accessCodes[accessCode].status = 'revoked';
+                accessCodes[accessCode].revokedAt = new Date().toISOString();
+                localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
+                showAdminResult(`Access Revoked: Code "${accessCode}" has been revoked.`, 'error');
+                updateAccessCodesTable();
+            } else {
+                showAdminResult('Access code not found.', 'warning');
+            }
+        }
+
+        function findIPUsage() {
+            const ipAddress = document.getElementById('ip-search').value.trim();
+            if (!ipAddress) {
+                showAdminResult('Please enter an IP address', 'error');
+                return;
+            }
+
+            const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
+            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
+            
+            let foundCodes = [];
+            
+            for (const [code, ips] of Object.entries(ipTracking)) {
+                if (ips.includes(ipAddress)) {
+                    foundCodes.push({
+                        code: code,
+                        status: accessCodes[code]?.status || 'unknown',
+                        usageCount: ips.filter(ip => ip === ipAddress).length
+                    });
+                }
+            }
+
+            if (foundCodes.length > 0) {
+                let html = `<strong>IP Address ${ipAddress} found in:</strong><ul>`;
+                foundCodes.forEach(item => {
+                    html += `<li>Access Code: ${item.code} (Status: <span class="status ${item.status}">${item.status}</span>) - Used ${item.usageCount} time(s)</li>`;
+                });
+                html += '</ul>';
+                showAdminResult(html, 'info');
+            } else {
+                showAdminResult(`No matches found for IP address ${ipAddress}`, 'warning');
+            }
+        }
+
+        function updateAccessCodesTable() {
+            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
+            const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
+            const tbody = document.getElementById('access-codes-body');
+            
+            tbody.innerHTML = '';
+            
+            for (const [code, data] of Object.entries(accessCodes)) {
+                const ips = ipTracking[code] || [];
+                const ipCount = ips.length;
+                const lastUsed = data.lastUsed ? new Date(data.lastUsed).toLocaleString() : 'Never';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${code}</td>
+                    <td><span class="status ${data.status}">${data.status}</span></td>
+                    <td>${ipCount} IP(s) ${ipCount > 1 ? '<span class="ip-count">Multiple!</span>' : ''}</td>
+                    <td>${lastUsed}</td>
+                    <td>
+                        <button onclick="revokeSpecificCode('${code}')" class="admin-btn danger" ${data.status === 'revoked' ? 'disabled' : ''}>
+                            Revoke
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+
+        function revokeSpecificCode(code) {
+            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
+            
+            if (accessCodes[code]) {
+                accessCodes[code].status = 'revoked';
+                accessCodes[code].revokedAt = new Date().toISOString();
+                localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
+                showAdminResult(`Access Revoked: Code "${code}" has been revoked.`, 'error');
+                updateAccessCodesTable();
+            }
+        }
+
+        function showAdminResult(message, type) {
+            const colors = {
+                success: '#155724',
+                error: '#721c24',
+                warning: '#856404',
+                info: '#0c5460'
+            };
+            const backgrounds = {
+                success: '#d4edda',
+                error: '#f8d7da',
+                warning: '#fff3cd',
+                info: '#d1ecf1'
+            };
+            
+            document.getElementById('admin-results').innerHTML = `
+                <div style="color: ${colors[type]}; background: ${backgrounds[type]}; padding: 10px; border-radius: 4px;">
+                    ${message}
+                </div>
+            `;
+        }
+
         // Initialize the game when page loads
         window.addEventListener('load', function() {
             // Set up login functionality
-            const validCodes = ["REAZ"]; // Example valid codes
-            
             document.getElementById('login-button').addEventListener('click', function() {
                 const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
-                if (validCodes.includes(accessCode)) {
+                const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
+                
+                if (accessCodes[accessCode] && accessCodes[accessCode].status !== 'revoked') {
+                    // Track IP usage
+                    const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
+                    const clientIP = getClientIP();
+                    
+                    if (!ipTracking[accessCode]) ipTracking[accessCode] = [];
+                    if (!ipTracking[accessCode].includes(clientIP)) ipTracking[accessCode].push(clientIP);
+                    
+                    accessCodes[accessCode].lastUsed = new Date().toISOString();
+                    localStorage.setItem('ipTracking', JSON.stringify(ipTracking));
+                    localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
+                    
                     document.getElementById('login-container').style.display = 'none';
                     document.getElementById('main-container').style.display = 'block';
-                    initGame(); // Start the game
+                    initGame();
+                    updateAccessCodesTable();
                 } else {
                     document.getElementById('login-message').textContent = "Invalid access code. Please try again.";
+                }
+            });
+
+            // Admin login
+            document.getElementById('admin-login-button').addEventListener('click', function() {
+                const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
+                if (accessCode === 'ADMIN123') {
+                    document.getElementById('login-container').style.display = 'none';
+                    document.getElementById('main-container').style.display = 'block';
+                    document.getElementById('admin-panel').style.display = 'block';
+                    gameState.isAdmin = true;
+                    initGame();
+                    updateAccessCodesTable();
+                } else {
+                    document.getElementById('login-message').textContent = "Invalid admin access code.";
                 }
             });
 
