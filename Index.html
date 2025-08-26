@@ -834,79 +834,37 @@
         const adminResults = document.getElementById('admin-results');
         const accessCodesBody = document.getElementById('access-codes-body');
 
-        // Enhanced storage system that works on Netlify
+        // Global variables for code management
         let accessCodes = {};
-        let ipTracking = {};
+        let revokedCodes = [];
 
-        // Initialize storage with fallback for Netlify
-        function initializeStorage() {
-            try {
-                // Try localStorage first
-                if (typeof localStorage !== 'undefined') {
-                    // Initialize access codes
-                    if (!localStorage.getItem('accessCodes')) {
-                        const defaultAccessCodes = {
-                            "REAZ": { status: "active", createdAt: new Date().toISOString() },
-                            "TEST1": { status: "active", createdAt: new Date().toISOString() },
-                            "TEST2": { status: "active", createdAt: new Date().toISOString() }
-                        };
-                        localStorage.setItem('accessCodes', JSON.stringify(defaultAccessCodes));
-                        accessCodes = defaultAccessCodes;
-                        console.log('Default access codes initialized in localStorage');
-                    } else {
-                        accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
-                        console.log('Access codes loaded from localStorage');
-                    }
-                    
-                    // Initialize IP tracking
-                    if (!localStorage.getItem('ipTracking')) {
-                        localStorage.setItem('ipTracking', JSON.stringify({}));
-                        ipTracking = {};
-                        console.log('IP tracking initialized in localStorage');
-                    } else {
-                        ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
-                    }
-                    
-                    return true;
-                } else {
-                    // Fallback to in-memory storage if localStorage is not available
-                    console.warn('localStorage not available, using in-memory storage');
-                    accessCodes = {
-                        "REAZ": { status: "active", createdAt: new Date().toISOString() },
-                        "TEST1": { status: "active", createdAt: new Date().toISOString() },
-                        "TEST2": { status: "active", createdAt: new Date().toISOString() }
-                    };
-                    ipTracking = {};
-                    return true;
-                }
-            } catch (error) {
-                console.error('Storage initialization failed:', error);
-                // Fallback to in-memory storage
-                accessCodes = {
-                    "REAZ": { status: "active", createdAt: new Date().toISOString() },
-                    "TEST1": { status: "active", createdAt: new Date().toISOString() },
-                    "TEST2": { status: "active", createdAt: new Date().toISOString() }
-                };
-                ipTracking = {};
-                return true;
-            }
+        // Function to fetch access codes from a text file
+        async function fetchAccessCodes() {
+            const response = await fetch('access-codes.txt');
+            const text = await response.text();
+            const codes = text.split('\n').filter(code => code.trim() !== '');
+            return codes.reduce((acc, code) => {
+                acc[code] = { status: "active", createdAt: new Date().toISOString() };
+                return acc;
+            }, {});
         }
 
-        // Save to storage with fallback
-        function saveToStorage() {
-            try {
-                if (typeof localStorage !== 'undefined') {
-                    localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
-                    localStorage.setItem('ipTracking', JSON.stringify(ipTracking));
-                }
-                // In-memory storage is already updated, no need for additional action
-            } catch (error) {
-                console.error('Failed to save to storage:', error);
-            }
+        // Function to fetch revoked codes from a text file
+        async function fetchRevokedCodes() {
+            const response = await fetch('revoked-codes.txt');
+            const text = await response.text();
+            return text.split('\n').filter(code => code.trim() !== '');
+        }
+
+        // Initialize access codes and revoked codes
+        async function initializeCodes() {
+            accessCodes = await fetchAccessCodes();
+            revokedCodes = await fetchRevokedCodes();
+            console.log('Access codes and revoked codes initialized');
         }
 
         // Call initialization
-        initializeStorage();
+        initializeCodes();
 
         // Function to get client IP (simplified for demo)
         function getClientIP() {
@@ -1200,18 +1158,12 @@
                 return;
             }
 
-            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
-            const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
-
             if (accessCodes[accessCode]) {
-                if (accessCodes[accessCode].status === 'revoked') {
+                if (revokedCodes.includes(accessCode)) {
                     showAdminResult('Access Revoked: This access code has been revoked.', 'error');
-                    return;
+                } else {
+                    showAdminResult(`Access Granted: Code "${accessCode}" is active.`, 'success');
                 }
-
-                const ipCount = ipTracking[accessCode] ? ipTracking[accessCode].length : 0;
-                showAdminResult(`Access Granted: Code "${accessCode}" is active. IP Addresses: ${ipCount} ${ipCount > 1 ? '<span class="ip-count">Multiple IPs!</span>' : ''}`, 'success');
-                updateAccessCodesTable();
             } else {
                 showAdminResult('Access code not found.', 'warning');
             }
@@ -1224,73 +1176,35 @@
                 return;
             }
 
-            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
-            
-            if (accessCodes[accessCode]) {
-                accessCodes[accessCode].status = 'revoked';
-                accessCodes[accessCode].revokedAt = new Date().toISOString();
-                localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
-                showAdminResult(`Access Revoked: Code "${accessCode}" has been revoked.`, 'error');
-                updateAccessCodesTable();
+            if (accessCodes[accessCode] && !revokedCodes.includes(accessCode)) {
+                revokedCodes.push(accessCode);
+                showAdminResult(`Access Revoked: Code "${accessCode}" has been added to revoked list.`, 'error');
+                // Note: In a real implementation, you'd want to save this to the revoked-codes.txt file
             } else {
-                showAdminResult('Access code not found.', 'warning');
+                showAdminResult('Access code not found or already revoked.', 'warning');
             }
         }
 
         function findIPUsage() {
-            const ipAddress = document.getElementById('ip-search').value.trim();
-            if (!ipAddress) {
-                showAdminResult('Please enter an IP address', 'error');
-                return;
-            }
-
-            const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
-            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
-            
-            let foundCodes = [];
-            
-            for (const [code, ips] of Object.entries(ipTracking)) {
-                if (ips.includes(ipAddress)) {
-                    foundCodes.push({
-                        code: code,
-                        status: accessCodes[code]?.status || 'unknown',
-                        usageCount: ips.filter(ip => ip === ipAddress).length
-                    });
-                }
-            }
-
-            if (foundCodes.length > 0) {
-                let html = `<strong>IP Address ${ipAddress} found in:</strong><ul>`;
-                foundCodes.forEach(item => {
-                    html += `<li>Access Code: ${item.code} (Status: <span class="status ${item.status}">${item.status}</span>) - Used ${item.usageCount} time(s)</li>`;
-                });
-                html += '</ul>';
-                showAdminResult(html, 'info');
-            } else {
-                showAdminResult(`No matches found for IP address ${ipAddress}`, 'warning');
-            }
+            showAdminResult('IP tracking has been disabled in this version.', 'info');
         }
 
         function updateAccessCodesTable() {
-            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
-            const ipTracking = JSON.parse(localStorage.getItem('ipTracking'));
             const tbody = document.getElementById('access-codes-body');
-            
             tbody.innerHTML = '';
             
             for (const [code, data] of Object.entries(accessCodes)) {
-                const ips = ipTracking[code] || [];
-                const ipCount = ips.length;
-                const lastUsed = data.lastUsed ? new Date(data.lastUsed).toLocaleString() : 'Never';
+                const isRevoked = revokedCodes.includes(code);
+                const status = isRevoked ? 'revoked' : 'active';
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${code}</td>
-                    <td><span class="status ${data.status}">${data.status}</span></td>
-                    <td>${ipCount} IP(s) ${ipCount > 1 ? '<span class="ip-count">Multiple!</span>' : ''}</td>
-                    <td>${lastUsed}</td>
+                    <td><span class="status ${status}">${status}</span></td>
+                    <td>N/A</td>
+                    <td>N/A</td>
                     <td>
-                        <button onclick="revokeSpecificCode('${code}')" class="admin-btn danger" ${data.status === 'revoked' ? 'disabled' : ''}>
+                        <button onclick="revokeSpecificCode('${code}')" class="admin-btn danger" ${isRevoked ? 'disabled' : ''}>
                             Revoke
                         </button>
                     </td>
@@ -1300,14 +1214,11 @@
         }
 
         function revokeSpecificCode(code) {
-            const accessCodes = JSON.parse(localStorage.getItem('accessCodes'));
-            
-            if (accessCodes[code]) {
-                accessCodes[code].status = 'revoked';
-                accessCodes[code].revokedAt = new Date().toISOString();
-                localStorage.setItem('accessCodes', JSON.stringify(accessCodes));
-                showAdminResult(`Access Revoked: Code "${code}" has been revoked.`, 'error');
+            if (accessCodes[code] && !revokedCodes.includes(code)) {
+                revokedCodes.push(code);
+                showAdminResult(`Access Revoked: Code "${code}" has been added to revoked list.`, 'error');
                 updateAccessCodesTable();
+                // Note: In a real implementation, you'd want to save this to the revoked-codes.txt file
             }
         }
 
@@ -1341,24 +1252,15 @@
             }
 
             // Set up login functionality
-            document.getElementById('login-button').addEventListener('click', function() {
+            document.getElementById('login-button').addEventListener('click', async function() {
                 try {
                     const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
                     
-                    if (accessCodes[accessCode] && accessCodes[accessCode].status !== 'revoked') {
-                        // Track IP usage
-                        const clientIP = getClientIP();
-                        
-                        if (!ipTracking[accessCode]) ipTracking[accessCode] = [];
-                        if (!ipTracking[accessCode].includes(clientIP)) ipTracking[accessCode].push(clientIP);
-                        
-                        accessCodes[accessCode].lastUsed = new Date().toISOString();
-                        saveToStorage();
-                        
+                    // Check if code is in access codes and not revoked
+                    if (accessCodes[accessCode] && !revokedCodes.includes(accessCode)) {
                         document.getElementById('login-container').style.display = 'none';
                         document.getElementById('main-container').style.display = 'block';
                         initGame();
-                        updateAccessCodesTable();
                     } else {
                         document.getElementById('login-message').textContent = "Invalid access code. Please try again.";
                     }
