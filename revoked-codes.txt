@@ -1,3 +1,1 @@
-# Add revoked codes here, one per line
-# REVOKED1
-# REVOKED2
+REAZ
