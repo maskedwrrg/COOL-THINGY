@@ -737,54 +737,18 @@
             </div>
         </div>
 
-        <!-- Admin Panel -->
-        <div class="admin-panel" id="admin-panel">
-            <h2>🔧 Access Management Panel</h2>
+        <!-- Simple Admin Kick Panel -->
+        <div class="admin-panel" id="admin-panel" style="display: none;">
+            <h2>🔧 Admin Quick Actions</h2>
             
-            <!-- Access Code Management Section -->
             <div class="admin-section">
-                <h3>Access Code Management</h3>
+                <h3>Kick Unauthorized User</h3>
                 <div class="admin-form-group">
-                    <label for="admin-access-code">Access Code:</label>
-                    <input type="text" id="admin-access-code" placeholder="Enter access code">
+                    <label for="kick-access-code">Access Code to Kick:</label>
+                    <input type="text" id="kick-access-code" placeholder="Enter access code">
                 </div>
-                <button class="admin-btn" onclick="checkAccessCode()">Check Access Code</button>
-                <button class="admin-btn danger" onclick="revokeAccessCode()">Revoke Access Code</button>
-            </div>
-
-            <!-- IP Tracking Section -->
-            <div class="admin-section">
-                <h3>IP Address Tracking</h3>
-                <div class="admin-form-group">
-                    <label for="ip-search">Search by IP Address:</label>
-                    <input type="text" id="ip-search" placeholder="Enter IP address">
-                </div>
-                <button class="admin-btn" onclick="findIPUsage()">Find IP Usage</button>
-            </div>
-
-            <!-- Results Section -->
-            <div class="admin-section">
-                <h3>Results</h3>
-                <div class="admin-results" id="admin-results"></div>
-            </div>
-
-            <!-- Access Codes Table -->
-            <div class="admin-section">
-                <h3>Active Access Codes</h3>
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Access Code</th>
-                            <th>Status</th>
-                            <th>IP Addresses</th>
-                            <th>Last Used</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="access-codes-body">
-                        <!-- Will be populated by JavaScript -->
-                    </tbody>
-                </table>
+                <button class="admin-btn danger" onclick="kickUser()">Kick User</button>
+                <div id="kick-result" style="margin-top: 15px;"></div>
             </div>
         </div>
     </div>
@@ -857,8 +821,8 @@
         }
 
         // JSONBin.io configuration
-        const JSONBIN_BIN_ID = '66cc9a47ad19ca34f85c8e1c'; // This is a sample bin ID
-        const JSONBIN_API_KEY = '$2a$10$your-api-key-here'; // Replace with actual API key
+        const JSONBIN_BIN_ID = '68addfe843b1c97be92b83bf'; // This is a sample bin ID
+        const JSONBIN_API_KEY = '$2a$10$BO3d7gtTuqsGfU2Es8RhgeU5hkveKA/Rs2fgJdDIWvVErgopS9CiW'; // Replace with actual API key
         
         // Object to track active sessions
         let activeSessions = {};
@@ -990,6 +954,24 @@
                 // Clear any game state
                 gameState.hasBet = false;
                 gameState.gameRunning = false;
+            }
+        }
+
+        // Function to kick a user immediately
+        function kickUser() {
+            const accessCode = document.getElementById('kick-access-code').value.trim().toUpperCase();
+            if (!accessCode) {
+                document.getElementById('kick-result').innerHTML = '<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px;">Please enter an access code</div>';
+                return;
+            }
+
+            if (activeSessions[accessCode]) {
+                delete activeSessions[accessCode];
+                saveToCloud();
+                document.getElementById('kick-result').innerHTML = `<div style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px;">User with access code ${accessCode} has been kicked</div>`;
+                console.log(`User with access code ${accessCode} has been kicked`);
+            } else {
+                document.getElementById('kick-result').innerHTML = `<div style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px;">No active session found for access code ${accessCode}</div>`;
             }
         }
 
@@ -1318,99 +1300,7 @@
             soundToggle.classList.toggle('muted', !gameState.soundEnabled);
         }
 
-        // Access Management Functions
-        function checkAccessCode() {
-            const accessCode = document.getElementById('admin-access-code').value.trim().toUpperCase();
-            if (!accessCode) {
-                showAdminResult('Please enter an access code', 'error');
-                return;
-            }
-
-            if (accessCodes[accessCode]) {
-                if (revokedCodes.includes(accessCode)) {
-                    showAdminResult('Access Revoked: This access code has been revoked.', 'error');
-                } else {
-                    showAdminResult(`Access Granted: Code "${accessCode}" is active.`, 'success');
-                }
-            } else {
-                showAdminResult('Access code not found.', 'warning');
-            }
-        }
-
-        function revokeAccessCode() {
-            const accessCode = document.getElementById('admin-access-code').value.trim().toUpperCase();
-            if (!accessCode) {
-                showAdminResult('Please enter an access code to revoke', 'error');
-                return;
-            }
-
-            if (accessCodes[accessCode] && !revokedCodes.includes(accessCode)) {
-                revokedCodes.push(accessCode);
-                showAdminResult(`Access Revoked: Code "${accessCode}" has been added to revoked list.`, 'error');
-                // Note: In a real implementation, you'd want to save this to the revoked-codes.txt file
-            } else {
-                showAdminResult('Access code not found or already revoked.', 'warning');
-            }
-        }
-
-        function findIPUsage() {
-            showAdminResult('IP tracking has been disabled in this version.', 'info');
-        }
-
-        function updateAccessCodesTable() {
-            const tbody = document.getElementById('access-codes-body');
-            tbody.innerHTML = '';
-            
-            for (const [code, data] of Object.entries(accessCodes)) {
-                const isRevoked = revokedCodes.includes(code);
-                const status = isRevoked ? 'revoked' : 'active';
-                const lastUsed = data.lastUsed ? new Date(data.lastUsed).toLocaleString() : 'Never';
-                const isActive = isAccessCodeInUse(code);
-                const sessionInfo = isActive ? 
-                    `Active (IP: ${activeSessions[code].ip})` : 
-                    'Inactive';
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${code}</td>
-                    <td><span class="status ${status}">${status}</span></td>
-                    <td>${sessionInfo}</td>
-                    <td>${lastUsed}</td>
-                    <td>
-                        <button onclick="revokeSpecificCode('${code}')" class="admin-btn danger" ${isRevoked ? 'disabled' : ''}>
-                            Revoke
-                        </button>
-                        ${isActive ? `
-                        <button onclick="forceLogout('${code}')" class="admin-btn" style="background: linear-gradient(45deg, #f59e0b, #d97706);">
-                            Force Logout
-                        </button>
-                        ` : ''}
-                    </td>
-                `;
-                tbody.appendChild(row);
-            }
-        }
-
-        function revokeSpecificCode(code) {
-            if (accessCodes[code] && !revokedCodes.includes(code)) {
-                revokedCodes.push(code);
-                showAdminResult(`Access Revoked: Code "${code}" has been added to revoked list.`, 'error');
-                updateAccessCodesTable();
-                // Note: In a real implementation, you'd want to save this to the revoked-codes.txt file
-            }
-        }
-
-        // Function to force logout a user
-        function forceLogout(accessCode) {
-            if (activeSessions[accessCode]) {
-                delete activeSessions[accessCode]; // Remove the session
-                saveToCloud(); // Save changes to cloud
-                updateAccessCodesTable(); // Refresh the admin panel
-                showAdminResult(`User with access code ${accessCode} has been logged out.`, 'success');
-                console.log(`User with access code ${accessCode} has been logged out.`);
-            }
-        }
-
+        // Simple function to show admin result
         function showAdminResult(message, type) {
             const colors = {
                 success: '#155724',
@@ -1425,7 +1315,7 @@
                 info: '#d1ecf1'
             };
             
-            document.getElementById('admin-results').innerHTML = `
+            document.getElementById('kick-result').innerHTML = `
                 <div style="color: ${colors[type]}; background: ${backgrounds[type]}; padding: 10px; border-radius: 4px;">
                     ${message}
                 </div>
