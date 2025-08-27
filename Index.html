@@ -1076,8 +1076,8 @@
         const soundToggle = document.getElementById('sound-toggle');
         const adminPanel = document.getElementById('admin-panel');
 
-        // GitHub Gist API functions
-        async function saveToGitHub() {
+        // Enhanced GitHub Gist API functions with retry mechanism
+        async function saveToGitHub(maxRetries = 3) {
             if (!adminState.githubToken) {
                 showAdminResult('GitHub token not configured', 'error', 'settings');
                 return false;
@@ -1089,79 +1089,119 @@
                 lastUpdated: new Date().toISOString()
             };
 
-            try {
-                const url = adminState.gistId 
-                    ? `https://api.github.com/gists/${adminState.gistId}`
-                    : 'https://api.github.com/gists';
+            let lastError;
+            
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const url = adminState.gistId 
+                        ? `https://api.github.com/gists/${adminState.gistId}`
+                        : 'https://api.github.com/gists';
 
-                const method = adminState.gistId ? 'PATCH' : 'POST';
+                    const method = adminState.gistId ? 'PATCH' : 'POST';
 
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Authorization': `token ${adminState.githubToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        description: 'Moonshot Crash Game Data',
-                        public: false,
-                        files: {
-                            'moonshot-data.json': {
-                                content: JSON.stringify(data, null, 2)
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Authorization': `token ${adminState.githubToken}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            description: 'Moonshot Crash Game Data',
+                            public: false,
+                            files: {
+                                'moonshot-data.json': {
+                                    content: JSON.stringify(data, null, 2)
+                                }
                             }
-                        }
-                    })
-                });
+                        })
+                    });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                    }
+
+                    const gistData = await response.json();
+                    if (!adminState.gistId) {
+                        adminState.gistId = gistData.id;
+                        document.getElementById('gist-id').value = adminState.gistId;
+                        saveAdminSettings();
+                    }
+
+                    console.log('Data saved to GitHub successfully');
+                    return true;
+                    
+                } catch (error) {
+                    lastError = error;
+                    console.error(`Save attempt ${attempt}/${maxRetries} failed:`, error);
+                    
+                    if (attempt < maxRetries) {
+                        // Exponential backoff with jitter
+                        const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 10000);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
                 }
-
-                const gistData = await response.json();
-                if (!adminState.gistId) {
-                    adminState.gistId = gistData.id;
-                    document.getElementById('gist-id').value = adminState.gistId;
-                    saveAdminSettings();
-                }
-
-                console.log('Data saved to GitHub successfully');
-                return true;
-            } catch (error) {
-                console.error('Failed to save to GitHub:', error);
-                showAdminResult(`Save failed: ${error.message}`, 'error', 'settings');
-                return false;
             }
+
+            console.error('Failed to save to GitHub after all attempts:', lastError);
+            showAdminResult(`Save failed: ${lastError.message}`, 'error', 'settings');
+            return false;
         }
 
-        async function loadFromGitHub() {
+        async function loadFromGitHub(maxRetries = 3) {
             if (!adminState.githubToken || !adminState.gistId) {
                 return { accessCodes: {}, activeSessions: {} };
             }
 
-            try {
-                const response = await fetch(`https://api.github.com/gists/${adminState.gistId}`, {
-                    headers: {
-                        'Authorization': `token ${adminState.githubToken}`
+            let lastError;
+            
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(`https://api.github.com/gists/${adminState.gistId}`, {
+                        headers: {
+                            'Authorization': `token ${adminState.githubToken}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                     }
-                });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    const gistData = await response.json();
+                    
+                    // Check if the file exists
+                    if (!gistData.files || !gistData.files['moonshot-data.json']) {
+                        console.warn('No data file found in gist, starting fresh');
+                        return { accessCodes: {}, activeSessions: {} };
+                    }
+                    
+                    const content = gistData.files['moonshot-data.json'].content;
+                    const data = JSON.parse(content);
+
+                    // Merge with existing data to preserve local changes
+                    adminState.accessCodes = { ...adminState.accessCodes, ...(data.accessCodes || {}) };
+                    adminState.activeSessions = { ...adminState.activeSessions, ...(data.activeSessions || {}) };
+
+                    console.log('Data loaded from GitHub successfully');
+                    return data;
+                    
+                } catch (error) {
+                    lastError = error;
+                    console.error(`Load attempt ${attempt}/${maxRetries} failed:`, error);
+                    
+                    if (attempt < maxRetries) {
+                        // Exponential backoff with jitter
+                        const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 10000);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
                 }
-
-                const gistData = await response.json();
-                const content = gistData.files['moonshot-data.json'].content;
-                const data = JSON.parse(content);
-
-                adminState.accessCodes = data.accessCodes || {};
-                adminState.activeSessions = data.activeSessions || {};
-
-                console.log('Data loaded from GitHub successfully');
-                return data;
-            } catch (error) {
-                console.error('Failed to load from GitHub:', error);
-                return { accessCodes: {}, activeSessions: {} };
             }
+
+            console.error('Failed to load from GitHub after all attempts:', lastError);
+            return { accessCodes: {}, activeSessions: {} };
         }
 
         // Admin settings management
@@ -1420,20 +1460,92 @@
             }
         }
 
-        // Auto-sync functionality
+        // Enhanced Auto-sync functionality
         function startAutoSync() {
             if (adminState.syncInterval) return;
             
+            let retryCount = 0;
+            const maxRetries = 3;
+            
             adminState.syncInterval = setInterval(async () => {
-                await loadFromGitHub();
-                checkUserSession();
+                try {
+                    await loadFromGitHub();
+                    checkUserSession();
+                    retryCount = 0; // Reset retry count on success
+                    
+                    // Update sync status indicator
+                    updateSyncStatus('success', 'Last sync: ' + new Date().toLocaleTimeString());
+                    
+                } catch (error) {
+                    console.error('Auto-sync failed:', error);
+                    retryCount++;
+                    
+                    if (retryCount <= maxRetries) {
+                        // Exponential backoff
+                        const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+                        updateSyncStatus('warning', `Sync failed (${retryCount}/${maxRetries}), retrying in ${backoffDelay/1000}s...`);
+                        
+                        // Wait before retrying
+                        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                    } else {
+                        updateSyncStatus('error', 'Sync failed after multiple attempts');
+                        retryCount = 0; // Reset for next interval
+                    }
+                }
             }, 30000); // Sync every 30 seconds
+            
+            // Initial sync
+            loadFromGitHub().catch(console.error);
         }
 
         function stopAutoSync() {
             if (adminState.syncInterval) {
                 clearInterval(adminState.syncInterval);
                 adminState.syncInterval = null;
+            }
+        }
+
+        function updateSyncStatus(status, message) {
+            // Create or update sync status indicator
+            let syncIndicator = document.getElementById('sync-status-indicator');
+            if (!syncIndicator) {
+                syncIndicator = document.createElement('div');
+                syncIndicator.id = 'sync-status-indicator';
+                syncIndicator.style.position = 'fixed';
+                syncIndicator.style.bottom = '20px';
+                syncIndicator.style.right = '20px';
+                syncIndicator.style.padding = '10px 15px';
+                syncIndicator.style.borderRadius = '8px';
+                syncIndicator.style.fontSize = '12px';
+                syncIndicator.style.fontWeight = 'bold';
+                syncIndicator.style.zIndex = '1000';
+                syncIndicator.style.cursor = 'pointer';
+                syncIndicator.onclick = () => refreshAccessCodes();
+                document.body.appendChild(syncIndicator);
+            }
+            
+            const statusColors = {
+                success: { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
+                warning: { bg: '#fff3cd', color: '#856404', border: '#ffeaa7' },
+                error: { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' }
+            };
+            
+            const colors = statusColors[status] || statusColors.success;
+            syncIndicator.style.background = colors.bg;
+            syncIndicator.style.color = colors.color;
+            syncIndicator.style.border = `1px solid ${colors.border}`;
+            syncIndicator.textContent = '🔄 ' + message;
+            
+            // Auto-hide success messages after 5 seconds
+            if (status === 'success') {
+                setTimeout(() => {
+                    if (syncIndicator.textContent.includes('Last sync:')) {
+                        syncIndicator.textContent = '🔄 Click to refresh';
+                        syncIndicator.style.background = 'rgba(15, 52, 96, 0.8)';
+                        syncIndicator.style.color = '#cbd5e1';
+                        syncIndicator.style.border = '1px solid var(--accent-color)';
+                    }
+                }, 5000);
             }
         }
 
@@ -1558,6 +1670,61 @@
             }, 5000);
         }
 
+        // Enhanced notification system
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 2000;
+                min-width: 300px;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            const typeStyles = {
+                success: { background: 'linear-gradient(45deg, #22c55e, #16a34a)' },
+                error: { background: 'linear-gradient(45deg, #ef4444, #dc2626)' },
+                warning: { background: 'linear-gradient(45deg, #f59e0b, #d97706)' },
+                info: { background: 'linear-gradient(45deg, #3b82f6, #2563eb)' }
+            };
+            
+            Object.assign(notification.style, typeStyles[type]);
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+            
+            // Add CSS animations
+            if (!document.getElementById('notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+                        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                    }
+                    @keyframes slideOut {
+                        from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                        to { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
         function getClientInfo() {
             // Generate a semi-persistent client ID
             let clientId = localStorage.getItem('moonshot-client-id');
@@ -1571,6 +1738,74 @@
                 userAgent: navigator.userAgent.substring(0, 50) + '...',
                 timestamp: new Date().toISOString()
             };
+        }
+
+        // Manual refresh function for users
+        function manualRefresh() {
+            showNotification('Refreshing access codes...', 'info', 2000);
+            refreshAccessCodes().then(() => {
+                showNotification('Access codes updated successfully!', 'success', 3000);
+            }).catch(error => {
+                showNotification('Failed to refresh: ' + error.message, 'error', 4000);
+            });
+        }
+
+        // Add refresh button to user interface
+        function addRefreshButton() {
+            if (document.getElementById('refresh-button')) return;
+            
+            const refreshBtn = document.createElement('button');
+            refreshBtn.id = 'refresh-button';
+            refreshBtn.textContent = '🔄 Refresh';
+            refreshBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                padding: 10px 15px;
+                background: linear-gradient(45deg, var(--bet-color), #3a86ff);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: bold;
+                z-index: 1000;
+                transition: all 0.3s ease;
+            `;
+            refreshBtn.onmouseover = () => {
+                refreshBtn.style.transform = 'translateY(-2px)';
+                refreshBtn.style.boxShadow = '0 4px 8px rgba(76, 201, 240, 0.3)';
+            };
+            refreshBtn.onmouseout = () => {
+                refreshBtn.style.transform = 'none';
+                refreshBtn.style.boxShadow = 'none';
+            };
+            refreshBtn.onclick = manualRefresh;
+            
+            document.body.appendChild(refreshBtn);
+        }
+
+        // Initialize the game
+        function initGame() {
+            createStars();
+            updateUI();
+            setupEventListeners();
+            
+            // Start session monitoring
+            if (adminState.autoSync) {
+                startAutoSync();
+            }
+            
+            // Add logout button
+            if (!document.querySelector('.logout-btn')) {
+                const logoutBtn = document.createElement('button');
+                logoutBtn.textContent = 'LOGOUT';
+                logoutBtn.className = 'logout-btn';
+                logoutBtn.onclick = logout;
+                document.body.appendChild(logoutBtn);
+            }
+
+            // Add refresh button to user interface
+            addRefreshButton();
         }
 
         // User authentication
