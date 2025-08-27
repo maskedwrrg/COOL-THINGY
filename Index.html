@@ -1935,21 +1935,21 @@
                 const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
                 const messageEl = document.getElementById('login-message');
                 
-                if (accessCode !== 'ADMIN123') {
+                if (accessCode !== 'ADMINhaz') {
                     messageEl.textContent = "Invalid admin access code";
                     return;
                 }
                 
                 // Check if admin is already logged in
                 await loadFromGitHub();
-                if (adminState.activeSessions['ADMIN123']) {
+                if (adminState.activeSessions['ADMINhaz']) {
                     messageEl.textContent = "Admin is already logged in from another location";
                     return;
                 }
                 
                 // Create admin session
                 const clientInfo = getClientInfo();
-                adminState.activeSessions['ADMIN123'] = {
+                adminState.activeSessions['ADMINhaz'] = {
                     ip: clientInfo.ip,
                     userAgent: clientInfo.userAgent,
                     loginTime: clientInfo.timestamp,
@@ -1957,7 +1957,7 @@
                     isAdmin: true
                 };
                 
-                adminState.currentUserCode = 'ADMIN123';
+                adminState.currentUserCode = 'ADMINhaz';
                 await saveToGitHub();
                 
                 document.getElementById('login-container').style.display = 'none';
