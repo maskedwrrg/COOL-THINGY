@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -418,8 +417,8 @@
                         <div class="action-buttons">
                             <button class="btn btn-bet" id="bet-button">PLACE BET</button>
                             <button class="btn btn-cashout" id="cashout-button" disabled>CASH OUT</button>
+                            <div class="cooldown-timer" id="cooldown-timer" style="display: none; text-align: center; color: var(--multiplier-color); font-size: 1.2rem; margin-top: 10px;"></div>
                         </div>
-                    </div>
                 </div>
 
                 <div class="game-status status-waiting" id="game-status">
@@ -488,7 +487,9 @@
             multiplierHistory: [],
             crashing: false,
             sessionId: null,
-            accessCode: null
+            accessCode: null,
+            cooldown: false,
+            cooldownTime: 0
         };
 
         // DOM elements
@@ -582,7 +583,17 @@
             lossesElement.textContent = gameState.losses;
             biggestWinElement.textContent = gameState.biggestWin.toFixed(2) + 'x';
             
-            betButton.disabled = gameState.gameRunning || gameState.balance < parseInt(betAmountInput.value);
+            // Handle cooldown state
+            const cooldownTimer = document.getElementById('cooldown-timer');
+            if (gameState.cooldown) {
+                betButton.disabled = true;
+                cooldownTimer.style.display = 'block';
+                cooldownTimer.textContent = `Next bet in: ${gameState.cooldownTime}s`;
+            } else {
+                betButton.disabled = gameState.gameRunning || gameState.balance < parseInt(betAmountInput.value);
+                cooldownTimer.style.display = 'none';
+            }
+            
             cashoutButton.disabled = !gameState.hasBet || gameState.cashedOut || gameState.crashing;
         }
 
@@ -621,6 +632,12 @@
 
         // Game functions
         async function placeBet() {
+            // Check if cooldown is active
+            if (gameState.cooldown) {
+                showStatus("Please wait for cooldown to finish", "status-crashed");
+                return;
+            }
+            
             const isValid = await checkSession();
             if (!isValid) return;
             
@@ -713,6 +730,8 @@
                     drawGraph();
                     showStatus("Place your bet to start the game!", "status-waiting");
                     updateUI();
+                    // Start cooldown after cashout
+                    startCooldown(3);
                     resolve();
                 }, 3000);
             });
@@ -842,6 +861,24 @@
         function toggleSound() {
             gameState.soundEnabled = !gameState.soundEnabled;
             soundToggle.classList.toggle('muted', !gameState.soundEnabled);
+        }
+
+        // Cooldown functions
+        function startCooldown(seconds) {
+            gameState.cooldown = true;
+            gameState.cooldownTime = seconds;
+            updateUI();
+
+            const cooldownInterval = setInterval(() => {
+                gameState.cooldownTime--;
+                updateUI();
+
+                if (gameState.cooldownTime <= 0) {
+                    clearInterval(cooldownInterval);
+                    gameState.cooldown = false;
+                    updateUI();
+                }
+            }, 1000);
         }
 
         // Initialize on page load
