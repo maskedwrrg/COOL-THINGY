@@ -326,6 +326,25 @@
             opacity: 0.6;
         }
 
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, var(--crash-color), #dc2626);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+        }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .game-container {
@@ -364,7 +383,6 @@
             0% { transform: translateY(0) rotate(0deg); opacity: 1; }
             100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
         }
-
     </style>
 </head>
 <body>
@@ -444,8 +462,12 @@
     </div>
 
     <div class="sound-toggle" id="sound-toggle">🔊</div>
+    <button class="logout-btn" id="logoutBtn">LOGOUT</button>
 
     <script>
+        // Config
+        const GITHUB_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/NON-PAY-PAYWALL-/refs/heads/main/usercodes.txt';
+
         // Game state
         const gameState = {
             balance: 1000,
@@ -463,7 +485,9 @@
             soundEnabled: true,
             currentTime: 0,
             multiplierHistory: [],
-            crashing: false
+            crashing: false,
+            sessionId: null,
+            accessCode: null
         };
 
         // DOM elements
@@ -486,11 +510,68 @@
         const biggestWinElement = document.getElementById('biggest-win');
         const historyList = document.getElementById('history-list');
         const soundToggle = document.getElementById('sound-toggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Session management
+        function loadSessions() {
+            try {
+                const stored = localStorage.getItem('activeSessions');
+                return stored ? JSON.parse(stored) : {};
+            } catch (err) {
+                console.error('Failed to load sessions:', err);
+                return {};
+            }
+        }
+
+        function saveSessions(sessions) {
+            try {
+                localStorage.setItem('activeSessions', JSON.stringify(sessions));
+            } catch (err) {
+                console.error('Failed to save sessions:', err);
+            }
+        }
+
+        async function fetchCodes() {
+            try {
+                const response = await fetch(GITHUB_CODES_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const text = await response.text();
+                return new Set(text.split('\n').map(c => c.trim()).filter(c => c.length > 0));
+            } catch (err) {
+                showStatus(`Failed to load codes: ${err.message}`, 'status-crashed');
+                return new Set();
+            }
+        }
+
+        async function checkSession() {
+            const sessions = loadSessions();
+            if (!gameState.sessionId || !sessions[gameState.sessionId]) {
+                alert('Session invalid or expired. Please log in again.');
+                logout();
+                return;
+            }
+            const validCodes = await fetchCodes();
+            if (!validCodes.has(gameState.accessCode)) {
+                alert('Access code revoked. Please log in again.');
+                logout();
+            }
+        }
+
+        function logout() {
+            const sessions = loadSessions();
+            if (gameState.sessionId && sessions[gameState.sessionId]) {
+                delete sessions[gameState.sessionId];
+                saveSessions(sessions);
+            }
+            window.location.href = 'lock.html';
+        }
 
         // Initialize the game
         function initGame() {
             updateUI();
             setupEventListeners();
+            // Periodically check session
+            setInterval(checkSession, 30000);
         }
 
         // Update UI elements
@@ -503,7 +584,6 @@
             lossesElement.textContent = gameState.losses;
             biggestWinElement.textContent = gameState.biggestWin.toFixed(2) + 'x';
             
-            // Update button states
             betButton.disabled = gameState.gameRunning || gameState.balance < parseInt(betAmountInput.value);
             cashoutButton.disabled = !gameState.hasBet || gameState.cashedOut || gameState.crashing;
         }
@@ -523,10 +603,12 @@
             betButton.addEventListener('click', placeBet);
             cashoutButton.addEventListener('click', cashOut);
             soundToggle.addEventListener('click', toggleSound);
+            logoutBtn.addEventListener('click', logout);
         }
 
         // Game functions
         function placeBet() {
+            checkSession();
             const betAmount = parseInt(betAmountInput.value);
             
             if (betAmount > gameState.balance) {
@@ -743,7 +825,37 @@
         }
 
         // Initialize on page load
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
+            // Get session ID and access code from URL
+            const params = new URLSearchParams(window.location.search);
+            gameState.sessionId = params.get('session');
+            gameState.accessCode = params.get('code');
+            
+            // Validate session
+            if (!gameState.sessionId || !gameState.accessCode) {
+                alert('Invalid session. Please log in again.');
+                window.location.href = 'lock.html';
+                return;
+            }
+
+            const sessions = loadSessions();
+            if (!sessions[gameState.sessionId] || sessions[gameState.sessionId].code !== gameState.accessCode) {
+                alert('Invalid session. Please log in again.');
+                window.location.href = 'lock.html';
+                return;
+            }
+
+            // Update last activity
+            sessions[gameState.sessionId].lastActivity = new Date().toISOString();
+            saveSessions();
+
+            const validCodes = await fetchCodes();
+            if (!validCodes.has(gameState.accessCode)) {
+                alert('Access code revoked. Please log in again.');
+                logout();
+                return;
+            }
+
             initGame();
         });
     </script>
