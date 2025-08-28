@@ -1,334 +1,1986 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Moonshot Crash Game</title>
-  <style>
-/* Global Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moonshot Crash - Virtual Gambling Game with Access Management</title>
+    <style>
+        :root {
+            --primary-color: #1a1a2e;
+            --secondary-color: #16213e;
+            --accent-color: #0f3460;
+            --rocket-color: #e94560;
+            --text-color: #ffffff;
+            --bet-color: #4cc9f0;
+            --cashout-color: #4ade80;
+            --crash-color: #ef4444;
+            --multiplier-color: #fbbf24;
+            --background-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --admin-panel-bg: #2d3748;
+            --admin-panel-border: #4a5568;
+            --status-active: #d4edda;
+            --status-revoked: #f8d7da;
+            --ip-warning: #ffc107;
+        }
 
-/* Page Styling */
-body {
-  background: linear-gradient(135deg, #1a0033, #4b0082, #6a0dad);
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  flex-direction: column;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* Game Container */
-#game-container {
-  background: rgba(30, 10, 50, 0.9);
-  border-radius: 16px;
-  padding: 30px;
-  width: 400px;
-  max-width: 90%;
-  text-align: center;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
-  border: 2px solid #ffd700;
-}
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--background-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-/* Headings */
-h1 {
-  font-size: 2rem;
-  margin-bottom: 20px;
-  color: #ffd700;
-  text-shadow: 0 0 12px #ffd700, 0 0 20px #ffae00;
-}
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-h2 {
-  margin: 15px 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #e0c3fc;
-}
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-/* Balance */
-#balance {
-  margin-bottom: 20px;
-  font-size: 1.2rem;
-  color: #ffd700;
-  text-shadow: 0 0 10px #ffdf6c;
-}
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(45deg, var(--rocket-color), var(--multiplier-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(235, 150, 232, 0.3);
+        }
 
-/* Bet Controls */
-input[type="range"] {
-  width: 100%;
-  margin: 15px 0;
-  accent-color: #ffd700;
-}
+        .header p {
+            color: #cbd5e1;
+            font-size: 1.1rem;
+        }
 
-#bet-amount {
-  font-weight: bold;
-  color: #ffdf6c;
-}
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
 
-/* Buttons */
-button {
-  background: linear-gradient(135deg, #6a0dad, #a64ca6);
-  border: 2px solid #ffd700;
-  padding: 12px 20px;
-  margin: 10px;
-  border-radius: 12px;
-  cursor: pointer;
-  color: #fff;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: 0.3s;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-}
+        .game-area {
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
 
-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 18px rgba(255, 215, 0, 0.6);
-}
+        .multiplier-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-button:disabled {
-  background: #444;
-  cursor: not-allowed;
-  box-shadow: none;
-  border: 2px solid #666;
-}
+        .current-multiplier {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--multiplier-color);
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            margin-bottom: 10px;
+        }
 
-/* Multiplier Display */
-#multiplier {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin: 20px 0;
-  color: #ffd700;
-  text-shadow: 0 0 15px #ffdf6c, 0 0 25px #ffae00;
-}
+        .multiplier-label {
+            font-size: 1.2rem;
+            color: #cbd5e1;
+        }
 
-/* Messages */
-#message {
-  margin: 15px 0;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
+        .rocket-animation {
+            height: 300px;
+            position: relative;
+            margin-bottom: 30px;
+            background: linear-gradient(to top, #000428, #004e92);
+            border-radius: 15px;
+            overflow: hidden;
+        }
 
-.win {
-  color: #ffd700;
-  text-shadow: 0 0 12px #ffd700;
-}
+        .rocket {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 150px;
+            background: linear-gradient(to bottom, #ff6b6b, #e94560);
+            border-radius: 10px 10px 5px 5px;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+            transition: bottom 0.05s ease-out;
+            z-index: 10;
+        }
 
-.loss {
-  color: #ff4d6d;
-  text-shadow: 0 0 12px #ff4d6d;
-}
+        .rocket::before {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ff8e53 0%, #ff6b35 30%, #ff4500 70%, transparent 100%);
+            border-radius: 50%;
+            animation: flame 0.2s infinite alternate;
+            filter: blur(5px);
+        }
 
-/* Rocket Animation Area */
-#rocket {
-  width: 60px;
-  height: 60px;
-  margin: 20px auto;
-  background: url('https://upload.wikimedia.org/wikipedia/commons/4/4e/Rocket_icon.svg') no-repeat center;
-  background-size: contain;
-  transition: transform 0.1s linear;
-  filter: drop-shadow(0 0 8px #ffd700);
-  position: relative; /* important for rocket movement */
-  bottom: 0;
-}
+        .rocket::after {
+            content: '🚀';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
 
-/* Explosion effect */
-.explode {
-  animation: explode 0.6s forwards;
-}
+        @keyframes flame {
+            0% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1.3) translateY(-5px); opacity: 0.9; }
+            100% { transform: translateX(-50%) scale(1.1) translateY(5px); opacity: 0.8; }
+        }
 
-@keyframes explode {
-  0% { transform: scale(1) rotate(0deg); opacity: 1; }
-  50% { transform: scale(1.5) rotate(180deg); opacity: 0.7; }
-  100% { transform: scale(0) rotate(360deg); opacity: 0; }
-}
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
 
-/* Round Countdown */
-#countdown {
-  font-size: 1.5rem;
-  color: #ffdf6c;
-  margin-bottom: 15px;
-  text-shadow: 0 0 8px #ffd700;
-}
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
 
-/* History Bar */
-#history {
-  margin-top: 20px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
 
-.history-item {
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: bold;
-}
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
 
-.history-win {
-  background: rgba(255, 215, 0, 0.15);
-  color: #ffd700;
-  border: 1px solid #ffd700;
-}
+        .bet-controls, .action-controls {
+            background: rgba(15, 52, 96, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--accent-color);
+        }
 
-.history-loss {
-  background: rgba(255, 77, 109, 0.15);
-  color: #ff4d6d;
-  border: 1px solid #ff4d6d;
-}
-</style>
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #cbd5e1;
+            font-weight: bold;
+        }
+
+        input[type="number"], input[type="range"], input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            background: rgba(26, 26, 46, 0.8);
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 8px;
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--rocket-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .bet-amount-display {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--bet-color);
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .action-buttons {
+            display: grid;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-bet {
+            background: linear-gradient(45deg, var(--bet-color), #3a86ff);
+            color: white;
+        }
+
+        .btn-bet:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 201, 240, 0.4);
+        }
+
+        .btn-bet:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-cashout {
+            background: linear-gradient(45deg, var(--cashout-color), #22c55e);
+            color: white;
+        }
+
+        .btn-cashout:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 222, 128, 0.4);
+        }
+
+        .btn-cashout:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .sidebar {
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats {
+            margin-bottom: 30px;
+        }
+
+        .stats h3, .history h3 {
+            color: var(--rocket-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(15, 52, 96, 0.4);
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            color: #cbd5e1;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .balance {
+            color: var(--multiplier-color) !important;
+            font-size: 1.3rem;
+        }
+
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: rgba(15, 52, 96, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-multiplier {
+            font-weight: bold;
+        }
+
+        .win {
+            color: var(--cashout-color);
+        }
+
+        .loss {
+            color: var(--crash-color);
+        }
+
+        .game-status {
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        .status-waiting {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--bet-color);
+        }
+
+        .status-running {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--multiplier-color);
+        }
+
+        .status-crashed {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--crash-color);
+        }
+
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .sound-toggle.muted {
+            opacity: 0.6;
+        }
+
+        /* Admin Panel Styles */
+        .admin-panel {
+            background: var(--admin-panel-bg);
+            border: 2px solid var(--admin-panel-border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .admin-panel h2 {
+            color: var(--multiplier-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .admin-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(15, 52, 96, 0.4);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .admin-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .admin-tab.active {
+            background: var(--rocket-color);
+            color: white;
+        }
+
+        .admin-tab:hover:not(.active) {
+            background: rgba(233, 69, 96, 0.2);
+        }
+
+        .admin-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(15, 52, 96, 0.4);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .admin-section.active {
+            display: block;
+        }
+
+        .admin-section h3 {
+            color: var(--rocket-color);
+            margin-bottom: 15px;
+        }
+
+        .admin-form-group {
+            margin-bottom: 15px;
+        }
+
+        .admin-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #cbd5e1;
+            font-weight: bold;
+        }
+
+        .admin-form-group input, .admin-form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            background: rgba(26, 26, 46, 0.8);
+            color: var(--text-color);
+        }
+
+        .admin-btn {
+            background: linear-gradient(45deg, var(--bet-color), #3a86ff);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .admin-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .admin-btn.danger {
+            background: linear-gradient(45deg, var(--crash-color), #dc2626);
+        }
+
+        .admin-btn.success {
+            background: linear-gradient(45deg, var(--cashout-color), #22c55e);
+        }
+
+        .admin-results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(26, 26, 46, 0.8);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--accent-color);
+        }
+
+        .admin-table th {
+            background: rgba(15, 52, 96, 0.6);
+            color: var(--text-color);
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.active {
+            background: var(--status-active);
+            color: #155724;
+        }
+
+        .status.revoked {
+            background: var(--status-revoked);
+            color: #721c24;
+        }
+
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .ip-count {
+            background: var(--ip-warning);
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, var(--crash-color), #dc2626);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .current-multiplier {
+                font-size: 3rem;
+            }
+            
+            .rocket-animation {
+                height: 200px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-tabs {
+                flex-direction: column;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes rocketLaunch {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        .rocket.launching {
+            animation: rocketLaunch 0.5s infinite alternate;
+        }
+
+        @keyframes explode {
+            0% { 
+                transform: translateX(-50%) scale(1) rotate(0deg);
+                opacity: 1;
+                filter: brightness(1);
+            }
+            25% { 
+                transform: translateX(-50%) scale(1.2) rotate(-10deg);
+                opacity: 0.9;
+                filter: brightness(1.5);
+            }
+            50% { 
+                transform: translateX(-50%) scale(1.5) rotate(10deg);
+                opacity: 0.7;
+                filter: brightness(2);
+            }
+            75% { 
+                transform: translateX(-50%) scale(1.8) rotate(-15deg);
+                opacity: 0.4;
+                filter: brightness(3);
+            }
+            100% { 
+                transform: translateX(-50%) scale(2) rotate(0deg);
+                opacity: 0;
+                filter: brightness(4);
+            }
+        }
+
+        .rocket.crashed {
+            animation: explode 0.8s forwards;
+        }
+
+        .explosion-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b35, #ff4500, #ff8e53);
+            animation: explodeParticle 1.5s forwards;
+            z-index: 20;
+        }
+
+        @keyframes explodeParticle {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--particle-x, 100px), var(--particle-y, 100px)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--multiplier-color);
+            animation: confettiFall 2s forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
+        }
+
+        .trail-particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: trailFade 1s forwards;
+        }
+
+        @keyframes trailFade {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Login Screen -->
+    <div id="login-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--background-gradient);">
+        <div style="background: rgba(26, 26, 46, 0.9); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid var(--accent-color); max-width: 500px;">
+            <h2 style="color: var(--multiplier-color); margin-bottom: 20px; font-size: 2rem;">🔒 Enter Access Code</h2>
+            <p style="color: #cbd5e1; margin-bottom: 20px;">Enter your access code to play Moonshot Crash</p>
+            <p style="color: #cbd5e1; margin-bottom: 20px;">Cost: $5 USD</p>
+            <p style="color: #cbd5e1; margin-bottom: 20px; font-size: 0.9rem;">⚠️ If caught sharing login keys, all involved will lose access with no refunds</p>
+            
+            <input type="text" id="access-code" placeholder="Enter access code" style="padding: 15px; border: 2px solid var(--accent-color); border-radius: 10px; background: rgba(26, 26, 46, 0.8); color: white; font-size: 1.1rem; width: 100%; margin-bottom: 15px; text-transform: uppercase;">
+            
+            <button id="login-button" style="padding: 15px 30px; background: linear-gradient(45deg, var(--bet-color), #3a86ff); border: none; border-radius: 10px; color: white; font-size: 1.1rem; cursor: pointer; font-weight: bold; margin-bottom: 15px;">Login</button>
+            
+            <p id="login-message" style="color: var(--crash-color); margin-top: 15px; font-weight: bold; min-height: 20px;"></p>
+            
+            <!-- Admin Login Button -->
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--accent-color);">
+                <button id="admin-login-button" style="padding: 10px 20px; background: linear-gradient(45deg, #9f7aea, #6b46c1); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold;">Admin Access</button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: rgba(15, 52, 96, 0.4); border-radius: 8px;">
+                <p style="color: #cbd5e1; font-size: 0.9rem;">Contact support if you need help with your access code</p>
+            </div>
+        </div>
+    </div>
 
-  <h1>🚀 Moonshot Crash</h1>
-  <div id="balance">Balance: 1000 coins</div>
+    <!-- Main Game Container -->
+    <div class="container" id="main-container" style="display: none;">
+        <div class="header">
+            <h1>MOONSHOT CRASH</h1>
+            <p>Bet virtual coins and cash out before the rocket crashes!</p>
+        </div>
 
-  <div id="game">
-    <div id="rocket">🚀</div>
-  </div>
+        <div class="game-container">
+            <div class="game-area">
+                <div class="multiplier-display">
+                    <div class="current-multiplier" id="multiplier">1.00x</div>
+                    <div class="multiplier-label">CURRENT MULTIPLIER</div>
+                </div>
 
-  <div id="multiplier">1.00x</div>
-  <div id="countdown"></div>
-  <div id="message"></div>
+                <div class="rocket-animation" id="rocket-container">
+                    <div class="stars" id="stars"></div>
+                    <div class="rocket" id="rocket"></div>
+                </div>
 
-  <div id="controls">
-    <label>Bet: <span id="betDisplay">100</span></label><br>
-    <input type="range" id="bet" min="10" max="500" step="10" value="100">
-    <br><br>
-    <button id="placeBet">Place Bet</button>
-    <button id="cashOut" disabled>Cash Out</button>
-  </div>
+                <div class="controls">
+                    <div class="bet-controls">
+                        <div class="control-group">
+                            <label for="bet-amount">BET AMOUNT</label>
+                            <input type="number" id="bet-amount" min="1" max="1000" value="10">
+                            <input type="range" id="bet-slider" min="1" max="1000" value="10">
+                            <div class="bet-amount-display" id="bet-display">10 coins</div>
+                        </div>
+                    </div>
 
-  <div id="history"></div>
+                    <div class="action-controls">
+                        <div class="action-buttons">
+                            <button class="btn btn-bet" id="bet-button">PLACE BET</button>
+                            <button class="btn btn-cashout" id="cashout-button" disabled>CASH OUT</button>
+                        </div>
+                    </div>
+                </div>
 
-<script>
-  let balance = 1000;
-  let bet = 100;
-  let currentMultiplier = 1.00;
-  let gameState = "WAITING"; // WAITING, RUNNING, CRASHED
-  let crashPoint = 0;
-  let multiplierInterval;
-  let countdownInterval;
-  let rocket = document.getElementById("rocket");
-  let balanceDisplay = document.getElementById("balance");
-  let multiplierDisplay = document.getElementById("multiplier");
-  let countdownDisplay = document.getElementById("countdown");
-  let messageDisplay = document.getElementById("message");
-  let betSlider = document.getElementById("bet");
-  let betDisplay = document.getElementById("betDisplay");
-  let placeBetBtn = document.getElementById("placeBet");
-  let cashOutBtn = document.getElementById("cashOut");
-  let historyDiv = document.getElementById("history");
+                <div class="game-status status-waiting" id="game-status">
+                    Place your bet to start the game!
+                </div>
+            </div>
 
-  betSlider.oninput = () => {
-    bet = parseInt(betSlider.value);
-    betDisplay.innerText = bet;
-  };
+            <div class="sidebar">
+                <div class="stats">
+                    <h3>STATISTICS</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Balance:</span>
+                        <span class="stat-value balance" id="balance">1000 coins</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Bets:</span>
+                        <span class="stat-value" id="total-bets">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wins:</span>
+                        <span class="stat-value" id="wins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Losses:</span>
+                        <span class="stat-value" id="losses">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Biggest Win:</span>
+                        <span class="stat-value" id="biggest-win">0x</span>
+                    </div>
+                </div>
 
-  placeBetBtn.onclick = () => {
-    if (gameState !== "WAITING") return;
-    if (bet > balance) {
-      messageDisplay.innerText = "Not enough balance!";
-      return;
-    }
-    balance -= bet;
-    updateBalance();
-    messageDisplay.innerText = "Bet placed: " + bet + " coins.";
-  };
+                <div class="history">
+                    <h3>RECENT HISTORY</h3>
+                    <div class="history-list" id="history-list">
+                        <!-- History items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  function startCountdown() {
-    let seconds = 5;
-    countdownDisplay.innerText = "Next round in " + seconds + "s";
-    countdownInterval = setInterval(() => {
-      seconds--;
-      if (seconds <= 0) {
-        clearInterval(countdownInterval);
-        startRound();
-      } else {
-        countdownDisplay.innerText = "Next round in " + seconds + "s";
-      }
-    }, 1000);
-  }
+        <!-- Enhanced Admin Panel -->
+        <div class="admin-panel" id="admin-panel">
+            <h2>🔧 Admin Control Panel</h2>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="switchTab('codes')">Access Codes</button>
+                <button class="admin-tab" onclick="switchTab('sessions')">Active Sessions</button>
+                <button class="admin-tab" onclick="switchTab('generate')">Generate Codes</button>
+                <button class="admin-tab" onclick="switchTab('settings')">Settings</button>
+            </div>
 
-  function startRound() {
-    gameState = "RUNNING";
-    currentMultiplier = 1.00;
-    rocket.style.bottom = "20px";
-    multiplierDisplay.innerText = currentMultiplier.toFixed(2) + "x";
-    messageDisplay.innerText = "";
+            <!-- Access Codes Management -->
+            <div id="admin-codes" class="admin-section active">
+                <h3>Access Code Management</h3>
+                
+                <div class="admin-form-group">
+                    <div class="form-row">
+                        <div>
+                            <label for="manual-code">Add Manual Code:</label>
+                            <input type="text" id="manual-code" placeholder="Enter new access code" style="text-transform: uppercase;">
+                        </div>
+                        <div style="display: flex; align-items: end;">
+                            <button class="admin-btn success" onclick="addManualCode()">Add Code</button>
+                        </div>
+                    </div>
+                </div>
 
-    // Weighted crash odds: 60% <2x, 30% 2-10x, 10% 10x+
-    let roll = Math.random();
-    if (roll < 0.6) crashPoint = (Math.random() * 1) + 1; 
-    else if (roll < 0.9) crashPoint = (Math.random() * 8) + 2; 
-    else crashPoint = (Math.random() * 20) + 10;
+                <div class="admin-form-group">
+                    <div class="form-row">
+                        <div>
+                            <label for="revoke-code">Revoke Access Code:</label>
+                            <input type="text" id="revoke-code" placeholder="Code to revoke" style="text-transform: uppercase;">
+                        </div>
+                        <div style="display: flex; align-items: end;">
+                            <button class="admin-btn danger" onclick="revokeCode()">Revoke</button>
+                        </div>
+                    </div>
+                </div>
 
-    cashOutBtn.disabled = false;
+                <button class="admin-btn" onclick="refreshAccessCodes()">🔄 Refresh Data</button>
 
-    multiplierInterval = setInterval(() => {
-      currentMultiplier += 0.05 * currentMultiplier; // exponential growth
-      multiplierDisplay.innerText = currentMultiplier.toFixed(2) + "x";
+                <div id="codes-results" class="admin-results"></div>
 
-      // rocket rises
-      let bottom = parseInt(rocket.style.bottom);
-      rocket.style.bottom = bottom + 5 + "px";
+                <table class="admin-table" id="codes-table">
+                    <thead>
+                        <tr>
+                            <th>Access Code</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Last Used</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="codes-table-body">
+                        <!-- Table content will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
 
-      if (currentMultiplier >= crashPoint) {
-        crash();
-      }
-    }, 200);
-  }
+            <!-- Active Sessions Management -->
+            <div id="admin-sessions" class="admin-section">
+                <h3>Active Sessions Management</h3>
+                
+                <div class="admin-form-group">
+                    <div class="form-row">
+                        <div>
+                            <label for="kick-code">Kick User by Code:</label>
+                            <input type="text" id="kick-code" placeholder="Access code to kick" style="text-transform: uppercase;">
+                        </div>
+                        <div style="display: flex; align-items: end;">
+                            <button class="admin-btn danger" onclick="kickUser()">Kick User</button>
+                        </div>
+                    </div>
+                </div>
 
-  function crash() {
-    gameState = "CRASHED";
-    clearInterval(multiplierInterval);
-    cashOutBtn.disabled = true;
-    messageDisplay.innerText = "💥 Crashed at " + crashPoint.toFixed(2) + "x!";
-    addHistory(crashPoint);
-    setTimeout(() => {
-      startCountdown();
-    }, 2000);
-  }
+                <button class="admin-btn" onclick="refreshSessions()">🔄 Refresh Sessions</button>
+                <button class="admin-btn danger" onclick="kickAllUsers()">Kick All Users</button>
 
-  cashOutBtn.onclick = () => {
-    if (gameState !== "RUNNING") return;
-    clearInterval(multiplierInterval);
-    gameState = "WAITING";
-    let winnings = bet * currentMultiplier;
-    balance += winnings;
-    updateBalance();
-    cashOutBtn.disabled = true;
-    messageDisplay.innerText = "✅ Cashed out at " + currentMultiplier.toFixed(2) + "x. Won " + winnings.toFixed(0) + " coins!";
-    addHistory(currentMultiplier);
-    setTimeout(() => {
-      startCountdown();
-    }, 2000);
-  };
+                <div id="sessions-results" class="admin-results"></div>
 
-  function updateBalance() {
-    balanceDisplay.innerText = "Balance: " + balance.toFixed(0) + " coins";
-  }
+                <table class="admin-table" id="sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Access Code</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                            <th>Login Time</th>
+                            <th>Last Activity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-table-body">
+                        <!-- Table content will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
 
-  function addHistory(mult) {
-    let div = document.createElement("div");
-    div.classList.add("history-item");
-    div.innerText = mult.toFixed(2) + "x";
-    if (mult < 2) div.classList.add("red");
-    else div.classList.add("green");
-    historyDiv.prepend(div);
-    if (historyDiv.childNodes.length > 10) {
-      historyDiv.removeChild(historyDiv.lastChild);
-    }
-  }
+            <!-- Code Generation -->
+            <div id="admin-generate" class="admin-section">
+                <h3>Generate Access Codes</h3>
+                
+                <div class="admin-form-group">
+                    <div class="form-row">
+                        <div>
+                            <label for="code-count">Number of Codes:</label>
+                            <input type="number" id="code-count" min="1" max="50" value="5">
+                        </div>
+                        <div>
+                            <label for="code-length">Code Length:</label>
+                            <select id="code-length">
+                                <option value="4">4 characters</option>
+                                <option value="6" selected>6 characters</option>
+                                <option value="8">8 characters</option>
+                                <option value="12">12 characters</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-  // Start the first countdown
-  startCountdown();
-</script>
+                <div class="admin-form-group">
+                    <label for="code-prefix">Code Prefix (optional):</label>
+                    <input type="text" id="code-prefix" placeholder="e.g., VIP, BETA" maxlength="4" style="text-transform: uppercase;">
+                </div>
+
+                <button class="admin-btn success" onclick="generateCodes()">Generate Codes</button>
+                <button class="admin-btn" onclick="exportCodes()">📤 Export All Codes</button>
+
+                <div id="generate-results" class="admin-results"></div>
+            </div>
+
+            <!-- Settings -->
+            <div id="admin-settings" class="admin-section">
+                <h3>System Settings</h3>
+                
+                <div class="admin-form-group">
+                    <label for="github-token">GitHub Personal Access Token:</label>
+                    <input type="password" id="github-token" placeholder="ghp_...">
+                    <small style="color: #cbd5e1; display: block; margin-top: 5px;">
+                        Required for persistent storage. Create at: https://github.com/settings/tokens
+                    </small>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="gist-id">Data Storage Gist ID:</label>
+                    <input type="text" id="gist-id" placeholder="Auto-generated when first saving">
+                    <small style="color: #cbd5e1; display: block; margin-top: 5px;">
+                        Leave empty to create a new private gist automatically
+                    </small>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>
+                        <input type="checkbox" id="auto-sync" checked style="width: auto; margin-right: 10px;">
+                        Auto-sync data every 30 seconds
+                    </label>
+                </div>
+
+                <button class="admin-btn success" onclick="saveSettings()">Save Settings</button>
+                <button class="admin-btn" onclick="testConnection()">🔗 Test Connection</button>
+                <button class="admin-btn danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+
+                <div id="settings-results" class="admin-results"></div>
+
+                <div style="margin-top: 20px; padding: 15px; background: rgba(15, 52, 96, 0.4); border-radius: 8px;">
+                    <h4 style="color: var(--multiplier-color); margin-bottom: 10px;">Setup Instructions:</h4>
+                    <ol style="color: #cbd5e1; line-height: 1.6;">
+                        <li>Create a GitHub Personal Access Token with 'gist' scope</li>
+                        <li>Enter the token above and save settings</li>
+                        <li>The system will automatically create a private gist for data storage</li>
+                        <li>All access codes and sessions will be stored persistently</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sound-toggle" id="sound-toggle">🔊</div>
+
+    <script>
+        // Game state
+        const gameState = {
+            balance: 1000,
+            currentBet: 0,
+            currentMultiplier: 1.00,
+            crashPoint: 0,
+            gameRunning: false,
+            hasBet: false,
+            cashedOut: false,
+            totalBets: 0,
+            wins: 0,
+            losses: 0,
+            biggestWin: 0,
+            history: [],
+            soundEnabled: true,
+            isAdmin: false
+        };
+
+        // Admin system state
+        const adminState = {
+            githubToken: '',
+            gistId: '',
+            autoSync: true,
+            accessCodes: {},
+            activeSessions: {},
+            currentUserCode: null,
+            syncInterval: null
+        };
+
+        // DOM elements
+        const multiplierElement = document.getElementById('multiplier');
+        const rocketElement = document.getElementById('rocket');
+        const rocketContainer = document.getElementById('rocket-container');
+        const starsElement = document.getElementById('stars');
+        const betAmountInput = document.getElementById('bet-amount');
+        const betSlider = document.getElementById('bet-slider');
+        const betDisplay = document.getElementById('bet-display');
+        const betButton = document.getElementById('bet-button');
+        const cashoutButton = document.getElementById('cashout-button');
+        const gameStatus = document.getElementById('game-status');
+        const balanceElement = document.getElementById('balance');
+        const totalBetsElement = document.getElementById('total-bets');
+        const winsElement = document.getElementById('wins');
+        const lossesElement = document.getElementById('losses');
+        const biggestWinElement = document.getElementById('biggest-win');
+        const historyList = document.getElementById('history-list');
+        const soundToggle = document.getElementById('sound-toggle');
+        const adminPanel = document.getElementById('admin-panel');
+
+        // GitHub Gist API functions
+        async function saveToGitHub() {
+            if (!adminState.githubToken) {
+                showAdminResult('GitHub token not configured', 'error', 'settings');
+                return false;
+            }
+
+            const data = {
+                accessCodes: adminState.accessCodes,
+                activeSessions: adminState.activeSessions,
+                lastUpdated: new Date().toISOString()
+            };
+
+            try {
+                const url = adminState.gistId 
+                    ? `https://api.github.com/gists/${adminState.gistId}`
+                    : 'https://api.github.com/gists';
+
+                const method = adminState.gistId ? 'PATCH' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `token ${adminState.githubToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: 'Moonshot Crash Game Data',
+                        public: false,
+                        files: {
+                            'moonshot-data.json': {
+                                content: JSON.stringify(data, null, 2)
+                            }
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const gistData = await response.json();
+                if (!adminState.gistId) {
+                    adminState.gistId = gistData.id;
+                    document.getElementById('gist-id').value = adminState.gistId;
+                    saveAdminSettings();
+                }
+
+                console.log('Data saved to GitHub successfully');
+                return true;
+            } catch (error) {
+                console.error('Failed to save to GitHub:', error);
+                showAdminResult(`Save failed: ${error.message}`, 'error', 'settings');
+                return false;
+            }
+        }
+
+        async function loadFromGitHub() {
+            if (!adminState.githubToken || !adminState.gistId) {
+                return { accessCodes: {}, activeSessions: {} };
+            }
+
+            try {
+                const response = await fetch(`https://api.github.com/gists/${adminState.gistId}`, {
+                    headers: {
+                        'Authorization': `token ${adminState.githubToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const gistData = await response.json();
+                const content = gistData.files['moonshot-data.json'].content;
+                const data = JSON.parse(content);
+
+                adminState.accessCodes = data.accessCodes || {};
+                adminState.activeSessions = data.activeSessions || {};
+
+                console.log('Data loaded from GitHub successfully');
+                return data;
+            } catch (error) {
+                console.error('Failed to load from GitHub:', error);
+                return { accessCodes: {}, activeSessions: {} };
+            }
+        }
+
+        // Admin settings management
+        function saveAdminSettings() {
+            const settings = {
+                githubToken: adminState.githubToken,
+                gistId: adminState.gistId,
+                autoSync: adminState.autoSync
+            };
+            try {
+                localStorage.setItem('moonshot-admin-settings', JSON.stringify(settings));
+            } catch (error) {
+                console.error('Failed to save admin settings:', error);
+            }
+        }
+
+        function loadAdminSettings() {
+            try {
+                const stored = localStorage.getItem('moonshot-admin-settings');
+                if (stored) {
+                    const settings = JSON.parse(stored);
+                    adminState.githubToken = settings.githubToken || '';
+                    adminState.gistId = settings.gistId || '';
+                    adminState.autoSync = settings.autoSync !== false;
+                    
+                    document.getElementById('github-token').value = adminState.githubToken;
+                    document.getElementById('gist-id').value = adminState.gistId;
+                    document.getElementById('auto-sync').checked = adminState.autoSync;
+                }
+            } catch (error) {
+                console.error('Failed to load admin settings:', error);
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            
+            // Update sections
+            document.querySelectorAll('.admin-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(`admin-${tabName}`).classList.add('active');
+            
+            // Refresh data when switching to certain tabs
+            if (tabName === 'codes') refreshAccessCodes();
+            if (tabName === 'sessions') refreshSessions();
+        }
+
+        // Access code management
+        async function addManualCode() {
+            const code = document.getElementById('manual-code').value.trim().toUpperCase();
+            if (!code) {
+                showAdminResult('Please enter a code', 'error', 'codes');
+                return;
+            }
+
+            if (adminState.accessCodes[code]) {
+                showAdminResult('Code already exists', 'warning', 'codes');
+                return;
+            }
+
+            adminState.accessCodes[code] = {
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                createdBy: 'admin',
+                lastUsed: null
+            };
+
+            const success = await saveToGitHub();
+            if (success) {
+                showAdminResult(`Code "${code}" added successfully`, 'success', 'codes');
+                document.getElementById('manual-code').value = '';
+                refreshAccessCodes();
+            }
+        }
+
+        async function revokeCode() {
+            const code = document.getElementById('revoke-code').value.trim().toUpperCase();
+            if (!code) {
+                showAdminResult('Please enter a code to revoke', 'error', 'codes');
+                return;
+            }
+
+            if (!adminState.accessCodes[code]) {
+                showAdminResult('Code not found', 'warning', 'codes');
+                return;
+            }
+
+            // Revoke the code and kick if active
+            adminState.accessCodes[code].status = 'revoked';
+            adminState.accessCodes[code].revokedAt = new Date().toISOString();
+            
+            if (adminState.activeSessions[code]) {
+                delete adminState.activeSessions[code];
+            }
+
+            const success = await saveToGitHub();
+            if (success) {
+                showAdminResult(`Code "${code}" revoked successfully`, 'success', 'codes');
+                document.getElementById('revoke-code').value = '';
+                refreshAccessCodes();
+                refreshSessions();
+            }
+        }
+
+        async function generateCodes() {
+            const count = parseInt(document.getElementById('code-count').value);
+            const length = parseInt(document.getElementById('code-length').value);
+            const prefix = document.getElementById('code-prefix').value.trim().toUpperCase();
+            
+            if (count < 1 || count > 50) {
+                showAdminResult('Code count must be between 1 and 50', 'error', 'generate');
+                return;
+            }
+
+            const newCodes = [];
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            
+            for (let i = 0; i < count; i++) {
+                let code = prefix;
+                const remainingLength = length - prefix.length;
+                
+                for (let j = 0; j < remainingLength; j++) {
+                    code += characters.charAt(Math.floor(Math.random() * characters.length));
+                }
+                
+                // Ensure uniqueness
+                if (!adminState.accessCodes[code]) {
+                    adminState.accessCodes[code] = {
+                        status: 'active',
+                        createdAt: new Date().toISOString(),
+                        createdBy: 'generator',
+                        lastUsed: null
+                    };
+                    newCodes.push(code);
+                }
+            }
+
+            const success = await saveToGitHub();
+            if (success) {
+                const codeList = newCodes.map(code => `<code style="background: rgba(15, 52, 96, 0.6); padding: 2px 6px; border-radius: 3px;">${code}</code>`).join(', ');
+                showAdminResult(`Generated ${newCodes.length} new codes: ${codeList}`, 'success', 'generate');
+                refreshAccessCodes();
+            }
+        }
+
+        function exportCodes() {
+            const activeCodes = Object.keys(adminState.accessCodes)
+                .filter(code => adminState.accessCodes[code].status === 'active')
+                .join('\n');
+            
+            const blob = new Blob([activeCodes], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `moonshot-codes-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showAdminResult('Codes exported successfully', 'success', 'generate');
+        }
+
+        // Session management
+        async function kickUser() {
+            const code = document.getElementById('kick-code').value.trim().toUpperCase();
+            if (!code) {
+                showAdminResult('Please enter a code', 'error', 'sessions');
+                return;
+            }
+
+            if (!adminState.activeSessions[code]) {
+                showAdminResult('No active session found for this code', 'warning', 'sessions');
+                return;
+            }
+
+            delete adminState.activeSessions[code];
+            const success = await saveToGitHub();
+            
+            if (success) {
+                showAdminResult(`User with code "${code}" has been kicked`, 'success', 'sessions');
+                document.getElementById('kick-code').value = '';
+                refreshSessions();
+            }
+        }
+
+        async function kickAllUsers() {
+            if (!confirm('Are you sure you want to kick all users? This action cannot be undone.')) {
+                return;
+            }
+
+            const sessionCount = Object.keys(adminState.activeSessions).length;
+            adminState.activeSessions = {};
+            
+            const success = await saveToGitHub();
+            if (success) {
+                showAdminResult(`All ${sessionCount} users have been kicked`, 'success', 'sessions');
+                refreshSessions();
+            }
+        }
+
+        // Settings management
+        async function saveSettings() {
+            adminState.githubToken = document.getElementById('github-token').value.trim();
+            adminState.gistId = document.getElementById('gist-id').value.trim();
+            adminState.autoSync = document.getElementById('auto-sync').checked;
+            
+            saveAdminSettings();
+            
+            if (adminState.autoSync && !adminState.syncInterval) {
+                startAutoSync();
+            } else if (!adminState.autoSync && adminState.syncInterval) {
+                stopAutoSync();
+            }
+            
+            showAdminResult('Settings saved successfully', 'success', 'settings');
+        }
+
+        async function testConnection() {
+            if (!adminState.githubToken) {
+                showAdminResult('Please enter a GitHub token first', 'error', 'settings');
+                return;
+            }
+
+            try {
+                const response = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': `token ${adminState.githubToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    showAdminResult(`Connection successful! Logged in as: ${userData.login}`, 'success', 'settings');
+                } else {
+                    showAdminResult('Connection failed. Check your token.', 'error', 'settings');
+                }
+            } catch (error) {
+                showAdminResult(`Connection error: ${error.message}`, 'error', 'settings');
+            }
+        }
+
+        async function clearAllData() {
+            if (!confirm('Are you sure you want to clear all data? This will delete all access codes and sessions permanently.')) {
+                return;
+            }
+
+            adminState.accessCodes = {};
+            adminState.activeSessions = {};
+            
+            const success = await saveToGitHub();
+            if (success) {
+                showAdminResult('All data cleared successfully', 'success', 'settings');
+                refreshAccessCodes();
+                refreshSessions();
+            }
+        }
+
+        // Auto-sync functionality
+        function startAutoSync() {
+            if (adminState.syncInterval) return;
+            
+            adminState.syncInterval = setInterval(async () => {
+                await loadFromGitHub();
+                checkUserSession();
+            }, 30000); // Sync every 30 seconds
+        }
+
+        function stopAutoSync() {
+            if (adminState.syncInterval) {
+                clearInterval(adminState.syncInterval);
+                adminState.syncInterval = null;
+            }
+        }
+
+        // Refresh functions
+        async function refreshAccessCodes() {
+            await loadFromGitHub();
+            updateAccessCodesTable();
+        }
+
+        async function refreshSessions() {
+            await loadFromGitHub();
+            updateSessionsTable();
+        }
+
+        function updateAccessCodesTable() {
+            const tbody = document.getElementById('codes-table-body');
+            tbody.innerHTML = '';
+            
+            Object.keys(adminState.accessCodes).forEach(code => {
+                const codeData = adminState.accessCodes[code];
+                const row = document.createElement('tr');
+                
+                const statusClass = codeData.status === 'active' ? 'status active' : 'status revoked';
+                const lastUsed = codeData.lastUsed ? new Date(codeData.lastUsed).toLocaleString() : 'Never';
+                const created = new Date(codeData.createdAt).toLocaleString();
+                
+                row.innerHTML = `
+                    <td><code style="background: rgba(15, 52, 96, 0.6); padding: 2px 6px; border-radius: 3px;">${code}</code></td>
+                    <td><span class="${statusClass}">${codeData.status.toUpperCase()}</span></td>
+                    <td>${created}</td>
+                    <td>${lastUsed}</td>
+                    <td>
+                        ${codeData.status === 'active' 
+                            ? `<button class="admin-btn danger" style="padding: 5px 10px; font-size: 12px;" onclick="quickRevokeCode('${code}')">Revoke</button>`
+                            : '<span style="color: #666;">-</span>'
+                        }
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateSessionsTable() {
+            const tbody = document.getElementById('sessions-table-body');
+            tbody.innerHTML = '';
+            
+            Object.keys(adminState.activeSessions).forEach(code => {
+                const session = adminState.activeSessions[code];
+                const row = document.createElement('tr');
+                
+                const loginTime = new Date(session.loginTime).toLocaleString();
+                const lastActivity = new Date(session.lastActivity).toLocaleString();
+                
+                row.innerHTML = `
+                    <td><code style="background: rgba(15, 52, 96, 0.6); padding: 2px 6px; border-radius: 3px;">${code}</code></td>
+                    <td><span class="status online">ONLINE</span></td>
+                    <td>${session.ip}</td>
+                    <td>${loginTime}</td>
+                    <td>${lastActivity}</td>
+                    <td>
+                        <button class="admin-btn danger" style="padding: 5px 10px; font-size: 12px;" onclick="quickKickUser('${code}')">Kick</button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Quick action functions
+        async function quickRevokeCode(code) {
+            if (!confirm(`Are you sure you want to revoke code "${code}"?`)) return;
+            
+            adminState.accessCodes[code].status = 'revoked';
+            adminState.accessCodes[code].revokedAt = new Date().toISOString();
+            
+            if (adminState.activeSessions[code]) {
+                delete adminState.activeSessions[code];
+            }
+
+            await saveToGitHub();
+            refreshAccessCodes();
+            refreshSessions();
+        }
+
+        async function quickKickUser(code) {
+            if (!confirm(`Are you sure you want to kick user "${code}"?`)) return;
+            
+            delete adminState.activeSessions[code];
+            await saveToGitHub();
+            refreshSessions();
+        }
+
+        // User session checking
+        function checkUserSession() {
+            if (!adminState.currentUserCode) return;
+            
+            // Check if user has been kicked or code revoked
+            const codeData = adminState.accessCodes[adminState.currentUserCode];
+            const hasSession = adminState.activeSessions[adminState.currentUserCode];
+            
+            if (!codeData || codeData.status !== 'active' || !hasSession) {
+                alert('Your session has been terminated by an administrator.');
+                logout();
+            }
+        }
+
+        // Utility functions
+        function showAdminResult(message, type, section) {
+            const colors = {
+                success: 'alert-success',
+                error: 'alert-danger',
+                warning: 'alert-warning',
+                info: 'alert-info'
+            };
+            
+            const resultDiv = document.getElementById(`${section}-results`);
+            resultDiv.innerHTML = `<div class="alert ${colors[type]}">${message}</div>`;
+            
+            setTimeout(() => {
+                resultDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function getClientInfo() {
+            // Generate a semi-persistent client ID
+            let clientId = localStorage.getItem('moonshot-client-id');
+            if (!clientId) {
+                clientId = 'client_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('moonshot-client-id', clientId);
+            }
+            
+            return {
+                ip: clientId, // Using client ID instead of IP for privacy
+                userAgent: navigator.userAgent.substring(0, 50) + '...',
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // User authentication
+        async function authenticateUser(accessCode) {
+            await loadFromGitHub();
+            
+            // Check if code exists and is active
+            if (!adminState.accessCodes[accessCode] || adminState.accessCodes[accessCode].status !== 'active') {
+                return { success: false, message: 'Invalid or revoked access code' };
+            }
+            
+            // Check if already in use
+            if (adminState.activeSessions[accessCode]) {
+                return { success: false, message: 'Access code is already in use by another user' };
+            }
+            
+            // Create session
+            const clientInfo = getClientInfo();
+            adminState.activeSessions[accessCode] = {
+                ip: clientInfo.ip,
+                userAgent: clientInfo.userAgent,
+                loginTime: clientInfo.timestamp,
+                lastActivity: clientInfo.timestamp
+            };
+            
+            // Update last used
+            adminState.accessCodes[accessCode].lastUsed = clientInfo.timestamp;
+            
+            // Save to GitHub
+            const success = await saveToGitHub();
+            if (!success) {
+                delete adminState.activeSessions[accessCode];
+                return { success: false, message: 'Failed to save session data' };
+            }
+            
+            adminState.currentUserCode = accessCode;
+            return { success: true };
+        }
+
+        function logout() {
+            if (adminState.currentUserCode) {
+                delete adminState.activeSessions[adminState.currentUserCode];
+                saveToGitHub();
+                adminState.currentUserCode = null;
+            }
+            
+            stopAutoSync();
+            
+            document.getElementById('main-container').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('login-container').style.display = 'flex';
+            
+            // Remove logout button
+            const logoutBtn = document.querySelector('.logout-btn');
+            if (logoutBtn) logoutBtn.remove();
+            
+            // Reset game state
+            gameState.hasBet = false;
+            gameState.gameRunning = false;
+            gameState.isAdmin = false;
+        }
+
+        // Initialize the game
+        function initGame() {
+            createStars();
+            updateUI();
+            setupEventListeners();
+            
+            // Start session monitoring
+            if (adminState.autoSync) {
+                startAutoSync();
+            }
+            
+            // Add logout button
+            if (!document.querySelector('.logout-btn')) {
+                const logoutBtn = document.createElement('button');
+                logoutBtn.textContent = 'LOGOUT';
+                logoutBtn.className = 'logout-btn';
+                logoutBtn.onclick = logout;
+                document.body.appendChild(logoutBtn);
+            }
+        }
+
+        // Create stars in the background
+        function createStars() {
+            starsElement.innerHTML = '';
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = (Math.random() * 3 + 1) + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDelay = (Math.random() * 2) + 's';
+                starsElement.appendChild(star);
+            }
+        }
+
+        // Update UI elements
+        function updateUI() {
+            multiplierElement.textContent = gameState.currentMultiplier.toFixed(2) + 'x';
+            betDisplay.textContent = parseInt(betAmountInput.value) + ' coins';
+            balanceElement.textContent = gameState.balance + ' coins';
+            totalBetsElement.textContent = gameState.totalBets;
+            winsElement.textContent = gameState.wins;
+            lossesElement.textContent = gameState.losses;
+            biggestWinElement.textContent = gameState.biggestWin.toFixed(2) + 'x';
+            
+            // Update button states
+            betButton.disabled = gameState.gameRunning || gameState.balance < parseInt(betAmountInput.value);
+            cashoutButton.disabled = !gameState.hasBet || gameState.cashedOut;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            betAmountInput.addEventListener('input', function() {
+                betSlider.value = betAmountInput.value;
+                updateUI();
+            });
+
+            betSlider.addEventListener('input', function() {
+                betAmountInput.value = betSlider.value;
+                updateUI();
+            });
+
+            betButton.addEventListener('click', placeBet);
+            cashoutButton.addEventListener('click', cashOut);
+            soundToggle.addEventListener('click', toggleSound);
+        }
+
+        // Game functions
+        function placeBet() {
+            checkUserSession();
+            
+            const betAmount = parseInt(betAmountInput.value);
+            
+            if (betAmount > gameState.balance) {
+                showStatus("Not enough coins!", "status-crashed");
+                return;
+            }
+
+            gameState.currentBet = betAmount;
+            gameState.balance -= betAmount;
+            gameState.hasBet = true;
+            gameState.cashedOut = false;
+            gameState.totalBets++;
+            
+            showStatus("Rocket launching...", "status-running");
+            startGame();
+        }
+
+        function startGame() {
+            gameState.gameRunning = true;
+            gameState.currentMultiplier = 1.00;
+            
+            const random = Math.random();
+            gameState.crashPoint = Math.max(1.10, Math.exp(-5 * random) * 100);
+            
+            rocketElement.classList.add('launching');
+            updateUI();
+            
+            const gameLoop = setInterval(function() {
+                if (!gameState.gameRunning) {
+                    clearInterval(gameLoop);
+                    return;
+                }
+
+                const growthRate = 0.02 + (gameState.currentMultiplier * 0.001);
+                gameState.currentMultiplier += growthRate;
+                
+                const maxHeight = 250;
+                const rocketProgress = Math.min(gameState.currentMultiplier / gameState.crashPoint, 1);
+                const rocketPosition = 20 + (rocketProgress * maxHeight);
+                rocketElement.style.bottom = rocketPosition + 'px';
+                
+                if (Math.random() < 0.3) {
+                    createRocketTrail();
+                }
+                
+                updateUI();
+
+                if (gameState.currentMultiplier >= gameState.crashPoint) {
+                    crash();
+                    clearInterval(gameLoop);
+                }
+            }, 50);
+        }
+
+        function cashOut() {
+            checkUserSession();
+            
+            if (!gameState.hasBet || gameState.cashedOut) return;
+
+            gameState.cashedOut = true;
+            gameState.gameRunning = false;
+            
+            const winnings = Math.floor(gameState.currentBet * gameState.currentMultiplier);
+            gameState.balance += winnings;
+            
+            gameState.wins++;
+            if (gameState.currentMultiplier > gameState.biggestWin) {
+                gameState.biggestWin = gameState.currentMultiplier;
+            }
+            
+            addToHistory(gameState.currentMultiplier, true);
+            
+            showStatus("Cashed out at " + gameState.currentMultiplier.toFixed(2) + "x! +" + winnings + " coins", "status-waiting");
+            rocketElement.classList.remove('launching');
+            createConfetti();
+            updateUI();
+            
+            setTimeout(function() {
+                gameState.hasBet = false;
+                showStatus("Place your bet to start the game!", "status-waiting");
+            }, 3000);
+        }
+
+        function crash() {
+            gameState.gameRunning = false;
+            gameState.losses++;
+            
+            rocketElement.classList.remove('launching');
+            rocketElement.classList.add('crashed');
+            
+            createExplosion();
+            addToHistory(gameState.currentMultiplier, false);
+            
+            showStatus("CRASHED at " + gameState.currentMultiplier.toFixed(2) + "x!", "status-crashed");
+            updateUI();
+            
+            setTimeout(function() {
+                gameState.hasBet = false;
+                rocketElement.classList.remove('crashed');
+                rocketElement.style.bottom = '20px';
+                showStatus("Place your bet to start the game!", "status-waiting");
+            }, 3000);
+        }
+
+        function createExplosion() {
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('explosion-particle');
+                
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 50 + Math.random() * 100;
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+                
+                particle.style.setProperty('--particle-x', x + 'px');
+                particle.style.setProperty('--particle-y', y + 'px');
+                particle.style.left = '50%';
+                particle.style.top = rocketElement.style.bottom;
+                
+                rocketContainer.appendChild(particle);
+                
+                setTimeout(function() {
+                    particle.remove();
+                }, 1500);
+            }
+        }
+
+        function addToHistory(multiplier, isWin) {
+            const historyItem = document.createElement('div');
+            historyItem.classList.add('history-item');
+            historyItem.classList.add(isWin ? 'win' : 'loss');
+            
+            historyItem.innerHTML = '<span>' + (isWin ? 'WIN' : 'LOSS') + '</span>' +
+                                   '<span class="history-multiplier">' + multiplier.toFixed(2) + 'x</span>';
+            
+            historyList.insertBefore(historyItem, historyList.firstChild);
+            
+            if (historyList.children.length > 10) {
+                historyList.removeChild(historyList.lastChild);
+            }
+            
+            gameState.history.unshift({
+                multiplier: multiplier,
+                win: isWin,
+                timestamp: new Date()
+            });
+        }
+
+        function createRocketTrail() {
+            const trailParticle = document.createElement('div');
+            trailParticle.classList.add('trail-particle');
+            trailParticle.style.left = rocketElement.style.left;
+            trailParticle.style.bottom = rocketElement.style.bottom;
+            trailParticle.style.backgroundColor = `hsl(${Math.random() * 60 + 20}, 100%, 50%)`;
+            rocketContainer.appendChild(trailParticle);
+            
+            setTimeout(function() {
+                trailParticle.remove();
+            }, 1000);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '0';
+                confetti.style.backgroundColor = 'hsl(' + (Math.random() * 360) + ', 100%, 50%)';
+                confetti.style.animationDelay = (Math.random() * 1) + 's';
+                rocketContainer.appendChild(confetti);
+                
+                setTimeout(function() {
+                    confetti.remove();
+                }, 2000);
+            }
+        }
+
+        function showStatus(message, statusClass) {
+            gameStatus.textContent = message;
+            gameStatus.className = 'game-status ' + statusClass;
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            soundToggle.classList.toggle('muted', !gameState.soundEnabled);
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            loadAdminSettings();
+            
+            // Login functionality
+            document.getElementById('login-button').addEventListener('click', async function() {
+                const loginButton = this;
+                const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
+                const messageEl = document.getElementById('login-message');
+                
+                if (!accessCode) {
+                    messageEl.textContent = "Please enter an access code";
+                    return;
+                }
+                
+                loginButton.disabled = true;
+                loginButton.textContent = "Logging in...";
+                messageEl.textContent = "";
+                
+                try {
+                    const result = await authenticateUser(accessCode);
+                    
+                    if (result.success) {
+                        document.getElementById('login-container').style.display = 'none';
+                        document.getElementById('main-container').style.display = 'block';
+                        initGame();
+                    } else {
+                        messageEl.textContent = result.message;
+                    }
+                } catch (error) {
+                    messageEl.textContent = "Login failed. Please try again.";
+                    console.error('Login error:', error);
+                }
+                
+                loginButton.disabled = false;
+                loginButton.textContent = "Login";
+            });
+
+            // Admin login
+            document.getElementById('admin-login-button').addEventListener('click', async function() {
+                const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
+                const messageEl = document.getElementById('login-message');
+                
+                if (accessCode !== 'ADMIN123') {
+                    messageEl.textContent = "Invalid admin access code";
+                    return;
+                }
+                
+                // Check if admin is already logged in
+                await loadFromGitHub();
+                if (adminState.activeSessions['ADMIN123']) {
+                    messageEl.textContent = "Admin is already logged in from another location";
+                    return;
+                }
+                
+                // Create admin session
+                const clientInfo = getClientInfo();
+                adminState.activeSessions['ADMIN123'] = {
+                    ip: clientInfo.ip,
+                    userAgent: clientInfo.userAgent,
+                    loginTime: clientInfo.timestamp,
+                    lastActivity: clientInfo.timestamp,
+                    isAdmin: true
+                };
+                
+                adminState.currentUserCode = 'ADMIN123';
+                await saveToGitHub();
+                
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('main-container').style.display = 'block';
+                document.getElementById('admin-panel').style.display = 'block';
+                gameState.isAdmin = true;
+                
+                initGame();
+                refreshAccessCodes();
+            });
+
+            // Enter key support
+            document.getElementById('access-code').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('login-button').click();
+                }
+            });
+            
+            // Convert access code input to uppercase
+            document.getElementById('access-code').addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        });
+    </script>
 </body>
 </html>
