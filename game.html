@@ -548,13 +548,21 @@
             if (!gameState.sessionId || !sessions[gameState.sessionId]) {
                 alert('Session invalid or expired. Please log in again.');
                 logout();
-                return;
+                return false;
+            }
+            // Check if the session code matches the access code
+            if (sessions[gameState.sessionId].code !== gameState.accessCode) {
+                alert('Session invalid or expired. Please log in again.');
+                logout();
+                return false;
             }
             const validCodes = await fetchCodes();
             if (!validCodes.has(gameState.accessCode)) {
                 alert('Access code revoked. Please log in again.');
                 logout();
+                return false;
             }
+            return true;
         }
 
         function logout() {
@@ -600,15 +608,22 @@
                 updateUI();
             });
 
-            betButton.addEventListener('click', placeBet);
+            betButton.addEventListener('click', function() {
+                placeBet().catch(err => {
+                    console.error('Error placing bet:', err);
+                    showStatus("Error placing bet. Please try again.", "status-crashed");
+                });
+            });
             cashoutButton.addEventListener('click', cashOut);
             soundToggle.addEventListener('click', toggleSound);
             logoutBtn.addEventListener('click', logout);
         }
 
         // Game functions
-        function placeBet() {
-            checkSession();
+        async function placeBet() {
+            const isValid = await checkSession();
+            if (!isValid) return;
+            
             const betAmount = parseInt(betAmountInput.value);
             
             if (betAmount > gameState.balance) {
