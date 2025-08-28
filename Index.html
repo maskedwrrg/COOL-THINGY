@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <title>Moonshot Crash Game</title>
   <style>
-    body {
-      /* Global Reset */
+/* Global Reset */
 * {
   margin: 0;
   padding: 0;
@@ -133,6 +132,8 @@ button:disabled {
   background-size: contain;
   transition: transform 0.1s linear;
   filter: drop-shadow(0 0 8px #ffd700);
+  position: relative; /* important for rocket movement */
+  bottom: 0;
 }
 
 /* Explosion effect */
@@ -181,7 +182,7 @@ button:disabled {
   color: #ff4d6d;
   border: 1px solid #ff4d6d;
 }
-  </style>
+</style>
 </head>
 <body>
 
