@@ -315,7 +315,7 @@
                 };
                 saveSessions();
                 // Redirect to game with session ID and access code
-                window.location.href = `index.html?session=${sessionId}&code=${encodeURIComponent(code)}`;
+                window.location.href = `game.html?session=${sessionId}&code=${encodeURIComponent(code)}`;
             }
             accessCheckInterval = setInterval(checkAccess, 30000);
         }
