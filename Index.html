@@ -223,11 +223,19 @@
     </div>
 
     <script>
+        // DOM Elements
+        const lockScreen = document.getElementById('lockScreen');
+        const adminContent = document.getElementById('adminContent');
+        const loginForm = document.getElementById('loginForm');
+        const accessCodeInput = document.getElementById('accessCode');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const loading = document.getElementById('loading');
+        const logoutBtn2 = document.getElementById('logoutBtn2');
+
         // Config - replace with your GitHub raw URLs
         const GITHUB_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/COOL-THINGY/refs/heads/main/usercodes.txt';
         const GITHUB_ADMIN_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/COOL-THINGY/refs/heads/main/admincodes.txt';
-
-        document.getElementById('currentUrl').textContent = `${GITHUB_CODES_URL} | ${GITHUB_ADMIN_CODES_URL}`;
 
         let validCodes = new Set();
         let validAdminCodes = new Set();
@@ -390,7 +398,7 @@
         });
 
         window.addEventListener('load', () => {
-            accessCodeInput.focus();
+            if (accessCodeInput) accessCodeInput.focus();
             activeSessions = loadSessions();
             refreshCodes();
         });
