@@ -603,7 +603,14 @@
                     showStatus("Error placing bet. Please try again.", "status-crashed");
                 });
             });
-            cashoutButton.addEventListener('click', cashOut);
+            cashoutButton.addEventListener('click', function() {
+                cashOut().catch(err => {
+                    console.error('Error cashing out:', err);
+                    showStatus("Error cashing out. Please try again.", "status-crashed");
+                    // Re-enable the cashout button if there was an error
+                    cashoutButton.disabled = false;
+                });
+            });
             soundToggle.addEventListener('click', toggleSound);
             logoutBtn.addEventListener('click', logout);
         }
@@ -674,12 +681,15 @@
             }, 50);
         }
 
-        function cashOut() {
+        async function cashOut() {
             if (!gameState.hasBet || gameState.cashedOut || gameState.crashing) return;
 
             gameState.cashedOut = true;
             gameState.gameRunning = false;
-
+            // Update UI immediately to reflect the change in button states
+            updateUI();
+            
+            // Calculate winnings before updating balance
             const winnings = Math.floor(gameState.currentBet * gameState.currentMultiplier);
             gameState.balance += winnings;
             
@@ -694,12 +704,16 @@
             createConfetti();
             updateUI();
             
-            setTimeout(function() {
-                gameState.hasBet = false;
-                gameState.multiplierHistory = [];
-                drawGraph();
-                showStatus("Place your bet to start the game!", "status-waiting");
-            }, 3000);
+            return new Promise(resolve => {
+                setTimeout(function() {
+                    gameState.hasBet = false;
+                    gameState.multiplierHistory = [];
+                    drawGraph();
+                    showStatus("Place your bet to start the game!", "status-waiting");
+                    updateUI();
+                    resolve();
+                }, 3000);
+            });
         }
 
         function crash() {
