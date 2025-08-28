@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moonshot Crash - Virtual Gambling Game with Access Management</title>
+    <title>Moonshot Crash - Virtual Gambling Game</title>
     <style>
         :root {
             --primary-color: #1a1a2e;
@@ -16,11 +16,6 @@
             --crash-color: #ef4444;
             --multiplier-color: #fbbf24;
             --background-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            --admin-panel-bg: #2d3748;
-            --admin-panel-border: #4a5568;
-            --status-active: #d4edda;
-            --status-revoked: #f8d7da;
-            --ip-warning: #ffc107;
         }
 
         * {
@@ -38,7 +33,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -143,9 +138,18 @@
         }
 
         @keyframes flame {
-            0% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
-            50% { transform: translateX(-50%) scale(1.3) translateY(-5px); opacity: 0.9; }
-            100% { transform: translateX(-50%) scale(1.1) translateY(5px); opacity: 0.8; }
+            0% { 
+                transform: translateX(-50%) scale(1) translateY(0);
+                opacity: 1;
+            }
+            50% { 
+                transform: translateX(-50%) scale(1.3) translateY(-5px);
+                opacity: 0.9;
+            }
+            100% { 
+                transform: translateX(-50%) scale(1.1) translateY(5px);
+                opacity: 0.8;
+            }
         }
 
         .stars {
@@ -192,7 +196,7 @@
             font-weight: bold;
         }
 
-        input[type="number"], input[type="range"], input[type="text"], input[type="password"] {
+        input[type="number"], input[type="range"] {
             width: 100%;
             padding: 10px;
             border: 2px solid var(--accent-color);
@@ -248,7 +252,7 @@
             color: white;
         }
 
-        .btn-bet:hover:not(:disabled) {
+        .btn-bet:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(76, 201, 240, 0.4);
         }
@@ -264,7 +268,7 @@
             color: white;
         }
 
-        .btn-cashout:hover:not(:disabled) {
+        .btn-cashout:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(74, 222, 128, 0.4);
         }
@@ -395,226 +399,6 @@
             opacity: 0.6;
         }
 
-        /* Admin Panel Styles */
-        .admin-panel {
-            background: var(--admin-panel-bg);
-            border: 2px solid var(--admin-panel-border);
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 30px;
-            display: none;
-        }
-
-        .admin-panel h2 {
-            color: var(--multiplier-color);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .admin-tabs {
-            display: flex;
-            margin-bottom: 20px;
-            background: rgba(15, 52, 96, 0.4);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .admin-tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            color: #cbd5e1;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .admin-tab.active {
-            background: var(--rocket-color);
-            color: white;
-        }
-
-        .admin-tab:hover:not(.active) {
-            background: rgba(233, 69, 96, 0.2);
-        }
-
-        .admin-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(15, 52, 96, 0.4);
-            border-radius: 10px;
-            display: none;
-        }
-
-        .admin-section.active {
-            display: block;
-        }
-
-        .admin-section h3 {
-            color: var(--rocket-color);
-            margin-bottom: 15px;
-        }
-
-        .admin-form-group {
-            margin-bottom: 15px;
-        }
-
-        .admin-form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #cbd5e1;
-            font-weight: bold;
-        }
-
-        .admin-form-group input, .admin-form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid var(--accent-color);
-            border-radius: 8px;
-            background: rgba(26, 26, 46, 0.8);
-            color: var(--text-color);
-        }
-
-        .admin-btn {
-            background: linear-gradient(45deg, var(--bet-color), #3a86ff);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-right: 10px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .admin-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .admin-btn.danger {
-            background: linear-gradient(45deg, var(--crash-color), #dc2626);
-        }
-
-        .admin-btn.success {
-            background: linear-gradient(45deg, var(--cashout-color), #22c55e);
-        }
-
-        .admin-results {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            background: rgba(26, 26, 46, 0.8);
-        }
-
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .admin-table th, .admin-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--accent-color);
-        }
-
-        .admin-table th {
-            background: rgba(15, 52, 96, 0.6);
-            color: var(--text-color);
-        }
-
-        .status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .status.active {
-            background: var(--status-active);
-            color: #155724;
-        }
-
-        .status.revoked {
-            background: var(--status-revoked);
-            color: #721c24;
-        }
-
-        .status.online {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status.offline {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .ip-count {
-            background: var(--ip-warning);
-            color: #856404;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
-
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .logout-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: linear-gradient(45deg, var(--crash-color), #dc2626);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 1000;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .logout-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
         /* Responsive design */
         @media (max-width: 768px) {
             .game-container {
@@ -631,14 +415,6 @@
             
             .rocket-animation {
                 height: 200px;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .admin-tabs {
-                flex-direction: column;
             }
         }
 
@@ -659,6 +435,7 @@
             animation: rocketLaunch 0.5s infinite alternate;
         }
 
+        /* Crash animation */
         @keyframes explode {
             0% { 
                 transform: translateX(-50%) scale(1) rotate(0deg);
@@ -691,6 +468,7 @@
             animation: explode 0.8s forwards;
         }
 
+        /* Explosion particles */
         .explosion-particle {
             position: absolute;
             width: 8px;
@@ -712,6 +490,7 @@
             }
         }
 
+        /* Confetti animation */
         .confetti {
             position: absolute;
             width: 10px;
@@ -747,7 +526,17 @@
     </style>
 </head>
 <body>
-    <!-- Main Game Container -->
+    <div id="login-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--background-gradient);">
+        <div style="background: rgba(26, 26, 46, 0.9); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid var(--accent-color);">
+            <h2 style="color: var(--multiplier-color); margin-bottom: 20px; font-size: 2rem;">🔒 Premium Access Required</h2>
+            <p style="color: #cbd5e1; margin-bottom: 20px;">Enter your access code to play Moonshot Crash
+            GET YOUR ACCESS CODE BY PAYMENT, IF FOUND SHARING KEYS ALL ACCESS WILL BE REMOVED FOR ALL INVOLVED AND NO REFUNDS</p>
+            <input type="text" id="access-code" placeholder="Enter access code" style="padding: 15px; border: 2px solid var(--accent-color); border-radius: 10px; background: rgba(26, 26, 46, 0.8); color: white; font-size: 1.1rem; width: 250px; margin-bottom: 15px;">
+            <button id="login-button" style="padding: 15px 30px; background: linear-gradient(45deg, var(--bet-color), #3a86ff); border: none; border-radius: 10px; color: white; font-size: 1.1rem; cursor: pointer; font-weight: bold;">Login</button>
+            <p id="login-message" style="color: var(--crash-color); margin-top: 15px; font-weight: bold;"></p>
+        </div>
+    </div>
+
     <div class="container" id="main-container" style="display: none;">
         <div class="header">
             <h1>MOONSHOT CRASH</h1>
@@ -822,9 +611,11 @@
                 </div>
             </div>
         </div>
-                </table>
-            </div>
-    <div class="sound-toggle" id="sound-toggle">🔊</div>
+    </div>
+
+    <div class="sound-toggle" id="sound-toggle">
+        🔊
+    </div>
 
     <script>
         // Game state
@@ -841,19 +632,7 @@
             losses: 0,
             biggestWin: 0,
             history: [],
-            soundEnabled: true,
-            isAdmin: false
-        };
-
-        // Admin system state
-        const adminState = {
-            githubToken: '',
-            gistId: '',
-            autoSync: true,
-            accessCodes: {},
-            activeSessions: {},
-            currentUserCode: null,
-            syncInterval: null
+            soundEnabled: true
         };
 
         // DOM elements
@@ -874,7 +653,14 @@
         const biggestWinElement = document.getElementById('biggest-win');
         const historyList = document.getElementById('history-list');
         const soundToggle = document.getElementById('sound-toggle');
-        const adminPanel = document.getElementById('admin-panel');
+
+        // Initialize the game
+        function initGame() {
+            createStars();
+            updateUI();
+            setupEventListeners();
+        }
+
         // Create stars in the background
         function createStars() {
             starsElement.innerHTML = '';
@@ -907,6 +693,7 @@
 
         // Setup event listeners
         function setupEventListeners() {
+            // Bet amount controls
             betAmountInput.addEventListener('input', function() {
                 betSlider.value = betAmountInput.value;
                 updateUI();
@@ -917,15 +704,18 @@
                 updateUI();
             });
 
+            // Bet button
             betButton.addEventListener('click', placeBet);
+
+            // Cashout button
             cashoutButton.addEventListener('click', cashOut);
+
+            // Sound toggle
             soundToggle.addEventListener('click', toggleSound);
         }
 
-        // Game functions
+        // Place a bet
         function placeBet() {
-            checkUserSession();
-            
             const betAmount = parseInt(betAmountInput.value);
             
             if (betAmount > gameState.balance) {
@@ -943,46 +733,53 @@
             startGame();
         }
 
+        // Start the game
         function startGame() {
             gameState.gameRunning = true;
             gameState.currentMultiplier = 1.00;
             
+            // Generate crash point using exponential distribution (more realistic crash game)
+            // Higher multipliers become exponentially less likely
             const random = Math.random();
             gameState.crashPoint = Math.max(1.10, Math.exp(-5 * random) * 100);
             
             rocketElement.classList.add('launching');
             updateUI();
             
+            // Game loop
             const gameLoop = setInterval(function() {
                 if (!gameState.gameRunning) {
                     clearInterval(gameLoop);
                     return;
                 }
 
+                // Increase multiplier with more realistic growth curve
                 const growthRate = 0.02 + (gameState.currentMultiplier * 0.001);
                 gameState.currentMultiplier += growthRate;
                 
+                // Move rocket up with smoother animation
                 const maxHeight = 250;
                 const rocketProgress = Math.min(gameState.currentMultiplier / gameState.crashPoint, 1);
                 const rocketPosition = 20 + (rocketProgress * maxHeight);
                 rocketElement.style.bottom = rocketPosition + 'px';
                 
+                // Add rocket trail effect
                 if (Math.random() < 0.3) {
                     createRocketTrail();
                 }
                 
                 updateUI();
 
+                // Check for crash with more reliable condition
                 if (gameState.currentMultiplier >= gameState.crashPoint) {
                     crash();
                     clearInterval(gameLoop);
                 }
-            }, 50);
+            }, 50); // Faster update for smoother animation
         }
 
+        // Cash out
         function cashOut() {
-            checkUserSession();
-            
             if (!gameState.hasBet || gameState.cashedOut) return;
 
             gameState.cashedOut = true;
@@ -991,11 +788,13 @@
             const winnings = Math.floor(gameState.currentBet * gameState.currentMultiplier);
             gameState.balance += winnings;
             
+            // Update stats
             gameState.wins++;
             if (gameState.currentMultiplier > gameState.biggestWin) {
                 gameState.biggestWin = gameState.currentMultiplier;
             }
             
+            // Add to history
             addToHistory(gameState.currentMultiplier, true);
             
             showStatus("Cashed out at " + gameState.currentMultiplier.toFixed(2) + "x! +" + winnings + " coins", "status-waiting");
@@ -1003,12 +802,14 @@
             createConfetti();
             updateUI();
             
+            // Reset for next round
             setTimeout(function() {
                 gameState.hasBet = false;
                 showStatus("Place your bet to start the game!", "status-waiting");
             }, 3000);
         }
 
+        // Crash
         function crash() {
             gameState.gameRunning = false;
             gameState.losses++;
@@ -1016,12 +817,16 @@
             rocketElement.classList.remove('launching');
             rocketElement.classList.add('crashed');
             
+            // Create explosion effect
             createExplosion();
+            
+            // Add to history
             addToHistory(gameState.currentMultiplier, false);
             
             showStatus("CRASHED at " + gameState.currentMultiplier.toFixed(2) + "x!", "status-crashed");
             updateUI();
             
+            // Reset for next round
             setTimeout(function() {
                 gameState.hasBet = false;
                 rocketElement.classList.remove('crashed');
@@ -1030,11 +835,13 @@
             }, 3000);
         }
 
+        // Create explosion effect
         function createExplosion() {
             for (let i = 0; i < 30; i++) {
                 const particle = document.createElement('div');
                 particle.classList.add('explosion-particle');
                 
+                // Random positions around the rocket
                 const angle = Math.random() * Math.PI * 2;
                 const distance = 50 + Math.random() * 100;
                 const x = Math.cos(angle) * distance;
@@ -1047,12 +854,14 @@
                 
                 rocketContainer.appendChild(particle);
                 
+                // Remove particle after animation
                 setTimeout(function() {
                     particle.remove();
                 }, 1500);
             }
         }
 
+        // Add result to history
         function addToHistory(multiplier, isWin) {
             const historyItem = document.createElement('div');
             historyItem.classList.add('history-item');
@@ -1063,10 +872,12 @@
             
             historyList.insertBefore(historyItem, historyList.firstChild);
             
+            // Keep only last 10 history items
             if (historyList.children.length > 10) {
                 historyList.removeChild(historyList.lastChild);
             }
             
+            // Add to game state history
             gameState.history.unshift({
                 multiplier: multiplier,
                 win: isWin,
@@ -1074,6 +885,7 @@
             });
         }
 
+        // Create rocket trail particles
         function createRocketTrail() {
             const trailParticle = document.createElement('div');
             trailParticle.classList.add('trail-particle');
@@ -1082,11 +894,13 @@
             trailParticle.style.backgroundColor = `hsl(${Math.random() * 60 + 20}, 100%, 50%)`;
             rocketContainer.appendChild(trailParticle);
             
+            // Remove particle after animation
             setTimeout(function() {
                 trailParticle.remove();
             }, 1000);
         }
 
+        // Create confetti animation
         function createConfetti() {
             for (let i = 0; i < 50; i++) {
                 const confetti = document.createElement('div');
@@ -1097,21 +911,48 @@
                 confetti.style.animationDelay = (Math.random() * 1) + 's';
                 rocketContainer.appendChild(confetti);
                 
+                // Remove confetti after animation
                 setTimeout(function() {
                     confetti.remove();
                 }, 2000);
             }
         }
 
+        // Show status message
         function showStatus(message, statusClass) {
             gameStatus.textContent = message;
             gameStatus.className = 'game-status ' + statusClass;
         }
 
+        // Toggle sound
         function toggleSound() {
             gameState.soundEnabled = !gameState.soundEnabled;
             soundToggle.classList.toggle('muted', !gameState.soundEnabled);
         }
+
+        // Initialize the game when page loads
+        window.addEventListener('load', function() {
+            // Set up login functionality
+            const validCodes = ["REAZ"]; // Example valid codes
+            
+            document.getElementById('login-button').addEventListener('click', function() {
+                const accessCode = document.getElementById('access-code').value.trim().toUpperCase();
+                if (validCodes.includes(accessCode)) {
+                    document.getElementById('login-container').style.display = 'none';
+                    document.getElementById('main-container').style.display = 'block';
+                    initGame(); // Start the game
+                } else {
+                    document.getElementById('login-message').textContent = "Invalid access code. Please try again.";
+                }
+            });
+
+            // Allow pressing Enter to submit
+            document.getElementById('access-code').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('login-button').click();
+                }
+            });
+        });
     </script>
 </body>
 </html>
