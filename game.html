@@ -544,18 +544,7 @@
         }
 
         async function checkSession() {
-            const sessions = loadSessions();
-            if (!gameState.sessionId || !sessions[gameState.sessionId]) {
-                alert('Session invalid or expired. Please log in again.');
-                logout();
-                return false;
-            }
-            // Check if the session code matches the access code
-            if (sessions[gameState.sessionId].code !== gameState.accessCode) {
-                alert('Session invalid or expired. Please log in again.');
-                logout();
-                return false;
-            }
+            // Only check the access code from GitHub
             const validCodes = await fetchCodes();
             if (!validCodes.has(gameState.accessCode)) {
                 alert('Access code revoked. Please log in again.');
@@ -846,23 +835,12 @@
             gameState.sessionId = params.get('session');
             gameState.accessCode = params.get('code');
             
-            // Validate session
-            if (!gameState.sessionId || !gameState.accessCode) {
-                alert('Invalid session. Please log in again.');
+            // Validate access code
+            if (!gameState.accessCode) {
+                alert('Invalid access code. Please log in again.');
                 window.location.href = 'index.html';
                 return;
             }
-
-            const sessions = loadSessions();
-            if (!sessions[gameState.sessionId] || sessions[gameState.sessionId].code !== gameState.accessCode) {
-                alert('Invalid session. Please log in again.');
-                window.location.href = 'index.html';
-                return;
-            }
-
-            // Update last activity
-            sessions[gameState.sessionId].lastActivity = new Date().toISOString();
-            saveSessions();
 
             const validCodes = await fetchCodes();
             if (!validCodes.has(gameState.accessCode)) {
