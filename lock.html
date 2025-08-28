@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Required</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lock-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .lock-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        p { color: #666; margin-bottom: 30px; line-height: 1.5; }
+        
+        .input-group { margin-bottom: 20px; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .error-message.show { opacity: 1; }
+        
+        .loading { display: none; margin-top: 15px; }
+        .loading.show { display: block; }
+        
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .github-url {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            color: #666;
+        }
+        
+        .protected-content { display: none; text-align: left; }
+        .protected-content.show { display: block; }
+        
+        .content-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #e1e5e9;
+        }
+        
+        .logout-btn {
+            background: #e74c3c;
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+            margin: 0;
+        }
+        
+        .logout-btn:hover { background: #c0392b; }
+        
+        .admin-message {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .admin-table th {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.revoked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <!-- Lock Screen -->
+    <div id="lockScreen" class="lock-container">
+        <div class="lock-icon">🔒</div>
+        <h1>Access Required</h1>
+        <p>Please enter your access code to continue</p>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <input type="text" id="accessCode" placeholder="Enter access code" maxlength="50" autocomplete="off">
+            </div>
+            <button type="submit" id="submitBtn">Unlock</button>
+        </form>
+        
+        <div class="error-message" id="errorMessage"></div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; font-size: 14px;">Verifying access...</p>
+        </div>
+        
+        <div class="github-url">
+            <strong>Setup Instructions:</strong><br>
+            1. Create two txt files in your GitHub repo<br>
+            2. One for normal codes (codes.txt)<br>
+            3. One for admin codes (admin-codes.txt)<br>
+            <br>
+            <strong>Current URLs:</strong> <span id="currentUrl">Not configured</span>
+        </div>
+    </div>
+    
+    <!-- Admin Content -->
+    <div id="adminContent" class="lock-container protected-content">
+        <div class="content-header">
+            <h1>🔑 Admin Access Granted</h1>
+            <button class="logout-btn" id="logoutBtn2">Logout</button>
+        </div>
+        <div class="admin-message">
+            <h2>Welcome Admin!</h2>
+            <p>You have unlocked administrator-only content.</p>
+        </div>
+        <div style="text-align:left;color:#333;">
+            <h3>Access Code Management</h3>
+            <table class="admin-table" id="codes-table">
+                <thead>
+                    <tr>
+                        <th>Access Code</th>
+                        <th>Status</th>
+                        <th>Active Sessions</th>
+                    </tr>
+                </thead>
+                <tbody id="codes-table-body">
+                    <!-- Table content will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Config - replace with your GitHub raw URLs
+        const GITHUB_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/NON-PAY-PAYWALL-/refs/heads/main/usercodes.txt';
+        const GITHUB_ADMIN_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/NON-PAY-PAYWALL-/refs/heads/main/admincodes.txt';
+
+        document.getElementById('currentUrl').textContent = `${GITHUB_CODES_URL} | ${GITHUB_ADMIN_CODES_URL}`;
+
+        let validCodes = new Set();
+        let validAdminCodes = new Set();
+        let currentAccessCode = null;
+        let isAdmin = false;
+        let accessCheckInterval = null;
+        let activeSessions = {};
+
+        // Load sessions from localStorage
+        function loadSessions() {
+            try {
+                const stored = localStorage.getItem('activeSessions');
+                return stored ? JSON.parse(stored) : {};
+            } catch (err) {
+                console.error('Failed to load sessions:', err);
+                return {};
+            }
+        }
+
+        // Save sessions to localStorage
+        function saveSessions() {
+            try {
+                localStorage.setItem('activeSessions', JSON.stringify(activeSessions));
+            } catch (err) {
+                console.error('Failed to save sessions:', err);
+            }
+        }
+
+        async function fetchCodes(url) {
+            try {
+                const response = await fetch(url + '?t=' + Date.now());
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const text = await response.text();
+                return text.split('\n').map(c => c.trim()).filter(c => c.length > 0);
+            } catch (err) {
+                showError(`Failed to load codes: ${err.message}`);
+                return [];
+            }
+        }
+
+        async function refreshCodes() {
+            const [codes, adminCodes] = await Promise.all([
+                fetchCodes(GITHUB_CODES_URL),
+                fetchCodes(GITHUB_ADMIN_CODES_URL)
+            ]);
+            validCodes = new Set(codes);
+            validAdminCodes = new Set(adminCodes);
+            updateAdminTable();
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.classList.add('show');
+            setTimeout(() => errorMessage.classList.remove('show'), 3000);
+        }
+
+        function setLoading(state) {
+            if (state) {
+                loading.classList.add('show');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Verifying...';
+            } else {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Unlock';
+            }
+        }
+
+        function generateSessionId() {
+            return 'sess_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function grantAccess(admin = false, code) {
+            lockScreen.style.display = 'none';
+            if (admin) {
+                adminContent.classList.add('show');
+                updateAdminTable();
+            } else {
+                // Create session
+                const sessionId = generateSessionId();
+                activeSessions[sessionId] = {
+                    code: code,
+                    loginTime: new Date().toISOString(),
+                    lastActivity: new Date().toISOString()
+                };
+                saveSessions();
+                // Redirect to game with session ID and access code
+                window.location.href = `index.html?session=${sessionId}&code=${encodeURIComponent(code)}`;
+            }
+            accessCheckInterval = setInterval(checkAccess, 30000);
+        }
+
+        function revokeAccess() {
+            adminContent.classList.remove('show');
+            lockScreen.style.display = 'flex';
+            currentAccessCode = null;
+            isAdmin = false;
+            accessCodeInput.value = '';
+            if (accessCheckInterval) clearInterval(accessCheckInterval);
+        }
+
+        async function checkAccess() {
+            if (!currentAccessCode) return;
+            await refreshCodes();
+            if (isAdmin && !validAdminCodes.has(currentAccessCode)) {
+                showError('Admin access revoked');
+                setTimeout(revokeAccess, 2000);
+            }
+        }
+
+        function updateAdminTable() {
+            const tbody = document.getElementById('codes-table-body');
+            tbody.innerHTML = '';
+            
+            // Count sessions per code
+            const sessionCounts = {};
+            Object.values(activeSessions).forEach(session => {
+                sessionCounts[session.code] = (sessionCounts[session.code] || 0) + 1;
+            });
+
+            validCodes.forEach(code => {
+                const row = document.createElement('tr');
+                const status = validCodes.has(code) ? 'active' : 'revoked';
+                const sessionCount = sessionCounts[code] || 0;
+                
+                row.innerHTML = `
+                    <td><code style="background: #f8f9fa; padding: 2px 6px; border-radius: 3px;">${code}</code></td>
+                    <td><span class="status ${status}">${status.toUpperCase()}</span></td>
+                    <td>${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = accessCodeInput.value.trim();
+            if (!code) return showError('Please enter an access code');
+            setLoading(true);
+            await refreshCodes();
+            activeSessions = loadSessions();
+            if (validAdminCodes.has(code)) {
+                currentAccessCode = code;
+                isAdmin = true;
+                grantAccess(true, code);
+            } else if (validCodes.has(code)) {
+                currentAccessCode = code;
+                isAdmin = false;
+                grantAccess(false, code);
+            } else {
+                showError('Invalid code');
+            }
+            setLoading(false);
+        });
+
+        logoutBtn2.addEventListener('click', revokeAccess);
+
+        accessCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginForm.dispatchEvent(new Event('submit'));
+        });
+
+        window.addEventListener('load', () => {
+            accessCodeInput.focus();
+            activeSessions = loadSessions();
+            refreshCodes();
+        });
+    </script>
+</body>
+</html>
