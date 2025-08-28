@@ -604,7 +604,10 @@
                 });
             });
             cashoutButton.addEventListener('click', function() {
-                cashOut().catch(err => {
+                cashOut().then(() => {
+                    // Re-enable the cashout button after successful cashout
+                    cashoutButton.disabled = false;
+                }).catch(err => {
                     console.error('Error cashing out:', err);
                     showStatus("Error cashing out. Please try again.", "status-crashed");
                     // Re-enable the cashout button if there was an error
@@ -686,8 +689,6 @@
 
             gameState.cashedOut = true;
             gameState.gameRunning = false;
-            // Update UI immediately to reflect the change in button states
-            updateUI();
             
             // Calculate winnings before updating balance
             const winnings = Math.floor(gameState.currentBet * gameState.currentMultiplier);
