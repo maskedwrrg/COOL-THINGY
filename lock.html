@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+nnmm1<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -193,15 +193,6 @@
             <div class="spinner"></div>
             <p style="margin-top: 10px; font-size: 14px;">Verifying access...</p>
         </div>
-        
-        <div class="github-url">
-            <strong>Setup Instructions:</strong><br>
-            1. Create two txt files in your GitHub repo<br>
-            2. One for normal codes (codes.txt)<br>
-            3. One for admin codes (admin-codes.txt)<br>
-            <br>
-            <strong>Current URLs:</strong> <span id="currentUrl">Not configured</span>
-        </div>
     </div>
     
     <!-- Admin Content -->
@@ -234,7 +225,7 @@
     <script>
         // Config - replace with your GitHub raw URLs
         const GITHUB_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/COOL-THINGY/refs/heads/main/usercodes.txt';
-        const GITHUB_ADMIN_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/NON-PAY-PAYWALL-/refs/heads/main/admincodes.txt';
+        const GITHUB_ADMIN_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/COOL-THINGY/refs/heads/main/admincodes.txt';
 
         document.getElementById('currentUrl').textContent = `${GITHUB_CODES_URL} | ${GITHUB_ADMIN_CODES_URL}`;
 
