@@ -734,7 +734,8 @@
                 
                 addToHistory(gameState.currentMultiplier, true);
                 
-                showStatus(`Cashed out at ${gameState.currentMultiplier.toFixed(2)}x! +${winnings} $MONEY$`, 'status-waiting');
+                // Show current multiplier and potential maximum multiplier
+                showStatus(`Cashed out at ${gameState.currentMultiplier.toFixed(2)}x! You could have gotten ${gameState.crashPoint.toFixed(2)}x! +${winnings} $MONEY$`, 'status-waiting');
                 createConfetti();
                 updateUI();
                 startCooldown(3);
