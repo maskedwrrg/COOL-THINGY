@@ -389,7 +389,7 @@
     <div class="container">
         <div class="header">
             <h1>MOONSHOT CRASH</h1>
-            <p>Bet virtual coins and cash out before the rocket crashes!</p>
+            <p>Bet virtual $MONEY$ and cash out before the rocket crashes!</p>
         </div>
 
         <div class="game-container">
@@ -409,7 +409,7 @@
                             <label for="bet-amount">BET AMOUNT</label>
                             <input type="number" id="bet-amount" min="1" max="1000" value="10">
                             <input type="range" id="bet-slider" min="1" max="1000" value="10">
-                            <div class="bet-amount-display" id="bet-display">10 coins</div>
+                            <div class="bet-amount-display" id="bet-display">10 $MONEY$</div>
                         </div>
                     </div>
 
@@ -431,7 +431,7 @@
                         <h3>STATISTICS</h3>
                         <div class="stat-item">
                             <span class="stat-label">Balance:</span>
-                            <span class="stat-value balance" id="balance">1000 coins</span>
+                            <span class="stat-value balance" id="balance">1000 $MONEY$</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Total Bets:</span>
@@ -574,8 +574,8 @@
             // Update UI elements
             function updateUI() {
                 multiplierElement.textContent = gameState.currentMultiplier.toFixed(2) + 'x';
-                betDisplay.textContent = parseInt(betAmountInput.value) + ' coins';
-                balanceElement.textContent = gameState.balance + ' coins';
+                betDisplay.textContent = parseInt(betAmountInput.value) + ' $MONEY$';
+                balanceElement.textContent = gameState.balance + ' $MONEY$';
                 totalBetsElement.textContent = gameState.totalBets;
                 winsElement.textContent = gameState.wins;
                 lossesElement.textContent = gameState.losses;
@@ -650,7 +650,7 @@
                     throw new Error('Invalid bet amount');
                 }
                 if (betAmount > gameState.balance) {
-                    throw new Error('Not enough coins');
+                    throw new Error('Not enough $MONEY$');
                 }
                 if (betAmount < 1) {
                     throw new Error('Minimum bet is 1 coin');
@@ -734,7 +734,7 @@
                 
                 addToHistory(gameState.currentMultiplier, true);
                 
-                showStatus(`Cashed out at ${gameState.currentMultiplier.toFixed(2)}x! +${winnings} coins`, 'status-waiting');
+                showStatus(`Cashed out at ${gameState.currentMultiplier.toFixed(2)}x! +${winnings} $MONEY$`, 'status-waiting');
                 createConfetti();
                 updateUI();
                 startCooldown(3);
