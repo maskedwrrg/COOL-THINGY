@@ -417,495 +417,556 @@
                         <div class="action-buttons">
                             <button class="btn btn-bet" id="bet-button" aria-label="Place bet">PLACE BET</button>
                             <button class="btn btn-cashout" id="cashout-button" disabled aria-label="Cash out" aria-disabled="true">CASH OUT</button>
-                            <div class="cooldown-timer" id="cooldown-timer" style="display: none; text-align: center; color: var(--multiplier-color); font-size: 1.2rem; margin-top: 10px;"></div>
+                            <div class="cooldown-timer" id="cooldown-timer" style="display: none; text-align: center; color: var(--multiplier-color); font-size: 1.2rem; margin-top: 10px;" aria-live="polite"></div>
                         </div>
-                    </div>
-
-                    <div class="game-status status-waiting" id="game-status">
-                        Place your bet to start the game!
                     </div>
                 </div>
 
-                <div class="sidebar">
-                    <div class="stats">
-                        <h3>STATISTICS</h3>
-                        <div class="stat-item">
-                            <span class="stat-label">Balance:</span>
-                            <span class="stat-value balance" id="balance">1000 coins</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Bets:</span>
-                            <span class="stat-value" id="total-bets">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Wins:</span>
-                            <span class="stat-value" id="wins">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Losses:</span>
-                            <span class="stat-value" id="losses">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Biggest Win:</span>
-                            <span class="stat-value" id="biggest-win">0x</span>
-                        </div>
-                    </div>
+                <div class="game-status status-waiting" id="game-status">
+                    Place your bet to start the game!
+                </div>
+            </div>
 
-                    <div class="history">
-                        <h3>RECENT HISTORY</h3>
-                        <div class="history-list" id="history-list">
-                            <!-- History items will be added here -->
-                        </div>
+            <div class="sidebar">
+                <div class="stats">
+                    <h3>STATISTICS</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Balance:</span>
+                        <span class="stat-value balance" id="balance">1000 coins</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Bets:</span>
+                        <span class="stat-value" id="total-bets">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wins:</span>
+                        <span class="stat-value" id="wins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Losses:</span>
+                        <span class="stat-value" id="losses">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Biggest Win:</span>
+                        <span class="stat-value" id="biggest-win">0x</span>
+                    </div>
+                </div>
+
+                <div class="history">
+                    <h3>RECENT HISTORY</h3>
+                    <div class="history-list" id="history-list">
+                        <!-- History items will be added here -->
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="sound-toggle" id="sound-toggle">🔊</div>
-        <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+    <div class="sound-toggle" id="sound-toggle">🔊</div>
+    <button class="logout-btn" id="logoutBtn">LOGOUT</button>
 
-        <script>
-            // Config
-            const GITHUB_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/COOL-THINGY/refs/heads/main/usercodes.txt';
+    <script>
+        // Config
+        const GITHUB_CODES_URL = 'https://raw.githubusercontent.com/maskedwrrg/COOL-THINGY/refs/heads/main/usercodes.txt';
 
-            // Game state
-            const gameState = {
-                balance: 1000,
-                currentBet: 0,
-                currentMultiplier: 1.00,
-                crashPoint: 0,
-                gameRunning: false,
-                hasBet: false,
-                cashedOut: false,
-                totalBets: 0,
-                wins: 0,
-                losses: 0,
-                biggestWin: 0,
-                history: [],
-                soundEnabled: true,
-                currentTime: 0,
-                multiplierHistory: [],
-                crashing: false,
-                sessionId: null,
-                accessCode: null,
-                cooldown: false,
-                cooldownTime: 0
-            };
+        // Game state
+        const gameState = {
+            balance: 1000,
+            currentBet: 0,
+            currentMultiplier: 1.00,
+            crashPoint: 0,
+            gameRunning: false,
+            hasBet: false,
+            cashedOut: false,
+            totalBets: 0,
+            wins: 0,
+            losses: 0,
+            biggestWin: 0,
+            history: [],
+            soundEnabled: true,
+            currentTime: 0,
+            multiplierHistory: [],
+            crashing: false,
+            sessionId: null,
+            accessCode: null,
+            cooldown: false,
+            cooldownEndTime: 0
+        };
 
-            // DOM elements
-            const multiplierElement = document.getElementById('multiplier');
-            const rocketContainer = document.getElementById('rocket-container');
-            const graphCanvas = document.getElementById('graph-canvas');
-            graphCanvas.width = 800;
-            graphCanvas.height = 300;
-            const ctx = graphCanvas.getContext('2d');
-            const betAmountInput = document.getElementById('bet-amount');
-            const betSlider = document.getElementById('bet-slider');
-            const betDisplay = document.getElementById('bet-display');
-            const betButton = document.getElementById('bet-button');
-            const cashoutButton = document.getElementById('cashout-button');
-            const gameStatus = document.getElementById('game-status');
-            const balanceElement = document.getElementById('balance');
-            const totalBetsElement = document.getElementById('total-bets');
-            const winsElement = document.getElementById('wins');
-            const lossesElement = document.getElementById('losses');
-            const biggestWinElement = document.getElementById('biggest-win');
-            const historyList = document.getElementById('history-list');
-            const soundToggle = document.getElementById('sound-toggle');
-            const logoutBtn = document.getElementById('logoutBtn');
+        // DOM elements
+        const multiplierElement = document.getElementById('multiplier');
+        const rocketContainer = document.getElementById('rocket-container');
+        const graphCanvas = document.getElementById('graph-canvas');
+        graphCanvas.width = 800;
+        graphCanvas.height = 300;
+        const ctx = graphCanvas.getContext('2d');
+        const betAmountInput = document.getElementById('bet-amount');
+        const betSlider = document.getElementById('bet-slider');
+        const betDisplay = document.getElementById('bet-display');
+        const betButton = document.getElementById('bet-button');
+        const cashoutButton = document.getElementById('cashout-button');
+        const gameStatus = document.getElementById('game-status');
+        const balanceElement = document.getElementById('balance');
+        const totalBetsElement = document.getElementById('total-bets');
+        const winsElement = document.getElementById('wins');
+        const lossesElement = document.getElementById('losses');
+        const biggestWinElement = document.getElementById('biggest-win');
+        const historyList = document.getElementById('history-list');
+        const soundToggle = document.getElementById('sound-toggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const cooldownTimer = document.getElementById('cooldown-timer');
 
-            // Session management
-            function loadSessions() {
+        // Session management
+        function loadSessions() {
+            try {
+                const stored = localStorage.getItem('activeSessions');
+                return stored ? JSON.parse(stored) : {};
+            } catch (err) {
+                console.error('Failed to load sessions:', err);
+                return {};
+            }
+        }
+
+        function saveSessions(sessions) {
+            try {
+                localStorage.setItem('activeSessions', JSON.stringify(sessions));
+            } catch (err) {
+                console.error('Failed to save sessions:', err);
+            }
+        }
+
+        async function fetchCodes() {
+            try {
+                const response = await fetch(GITHUB_CODES_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const text = await response.text();
+                return new Set(text.split('\n').map(c => c.trim()).filter(c => c.length > 0));
+            } catch (err) {
+                showStatus(`Failed to load codes: ${err.message}`, 'status-crashed');
+                return new Set();
+            }
+        }
+
+        async function checkSession() {
+            const validCodes = await fetchCodes();
+            if (!validCodes.has(gameState.accessCode)) {
+                alert('Access code revoked. Please log in again.');
+                logout();
+                return false;
+            }
+            return true;
+        }
+
+        function logout() {
+            const sessions = loadSessions();
+            if (gameState.sessionId && sessions[gameState.sessionId]) {
+                delete sessions[gameState.sessionId];
+                saveSessions(sessions);
+            }
+            window.location.href = 'index.html';
+        }
+
+        // Persist game state
+        function saveGameState() {
+            try {
+                localStorage.setItem('gameState', JSON.stringify({
+                    balance: gameState.balance,
+                    totalBets: gameState.totalBets,
+                    wins: gameState.wins,
+                    losses: gameState.losses,
+                    biggestWin: gameState.biggestWin,
+                    history: gameState.history,
+                    cooldown: gameState.cooldown,
+                    cooldownEndTime: gameState.cooldownEndTime
+                }));
+            } catch (err) {
+                console.error('Failed to save game state:', err);
+            }
+        }
+
+        function loadGameState() {
+            try {
+                const stored = localStorage.getItem('gameState');
+                if (stored) {
+                    const savedState = JSON.parse(stored);
+                    Object.assign(gameState, {
+                        balance: savedState.balance,
+                        totalBets: savedState.totalBets,
+                        wins: savedState.wins,
+                        losses: savedState.losses,
+                        biggestWin: savedState.biggestWin,
+                        history: savedState.history,
+                        cooldown: savedState.cooldown,
+                        cooldownEndTime: savedState.cooldownEndTime
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to load game state:', err);
+            }
+        }
+
+        // Initialize the game
+        function initGame() {
+            loadGameState();
+            updateUI();
+            setupEventListeners();
+            checkCooldown();
+            setInterval(checkSession, 30000);
+        }
+
+        // Update UI elements
+        function updateUI() {
+            multiplierElement.textContent = gameState.currentMultiplier.toFixed(2) + 'x';
+            betDisplay.textContent = parseInt(betAmountInput.value) + ' coins';
+            balanceElement.textContent = gameState.balance + ' coins';
+            totalBetsElement.textContent = gameState.totalBets;
+            winsElement.textContent = gameState.wins;
+            lossesElement.textContent = gameState.losses;
+            biggestWinElement.textContent = gameState.biggestWin.toFixed(2) + 'x';
+
+            if (gameState.cooldown) {
+                const remainingTime = Math.ceil((gameState.cooldownEndTime - Date.now()) / 1000);
+                betButton.disabled = true;
+                cooldownTimer.style.display = 'block';
+                cooldownTimer.textContent = `Next bet in: ${remainingTime > 0 ? remainingTime : 0}s`;
+            } else {
+                betButton.disabled = gameState.gameRunning || gameState.balance < parseInt(betAmountInput.value);
+                cooldownTimer.style.display = 'none';
+            }
+
+            cashoutButton.disabled = !gameState.hasBet || gameState.cashedOut || gameState.crashing;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            betAmountInput.addEventListener('input', function() {
+                betSlider.value = betAmountInput.value;
+                updateUI();
+            });
+
+            betSlider.addEventListener('input', function() {
+                betAmountInput.value = betSlider.value;
+                updateUI();
+            });
+
+            betButton.addEventListener('click', async function() {
+                if (betButton.disabled) return;
+                betButton.disabled = true;
                 try {
-                    const stored = localStorage.getItem('activeSessions');
-                    return stored ? JSON.parse(stored) : {};
+                    await placeBet();
                 } catch (err) {
-                    console.error('Failed to load sessions:', err);
-                    return {};
+                    console.error('Error placing bet:', err);
+                    showStatus(`Error placing bet: ${err.message}`, 'status-crashed');
+                    betButton.disabled = false;
                 }
-            }
+            });
 
-            function saveSessions(sessions) {
+            cashoutButton.addEventListener('click', async function() {
+                if (cashoutButton.disabled) return;
+                cashoutButton.disabled = true;
                 try {
-                    localStorage.setItem('activeSessions', JSON.stringify(sessions));
+                    await cashOut();
                 } catch (err) {
-                    console.error('Failed to save sessions:', err);
+                    console.error('Error cashing out:', err);
+                    showStatus(`Error cashing out: ${err.message}`, 'status-crashed');
+                    cashoutButton.disabled = gameState.hasBet && !gameState.cashedOut && !gameState.crashing;
                 }
-            }
+            });
 
-            async function fetchCodes() {
-                try {
-                    const response = await fetch(GITHUB_CODES_URL + '?t=' + Date.now());
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const text = await response.text();
-                    return new Set(text.split('\n').map(c => c.trim()).filter(c => c.length > 0));
-                } catch (err) {
-                    showStatus(`Failed to load codes: ${err.message}`, 'status-crashed');
-                    return new Set();
+            soundToggle.addEventListener('click', toggleSound);
+            logoutBtn.addEventListener('click', logout);
+        }
+
+        // Cooldown functions
+        function startCooldown(seconds) {
+            gameState.cooldown = true;
+            gameState.cooldownEndTime = Date.now() + seconds * 1000;
+            saveGameState();
+            updateUI();
+
+            const cooldownInterval = setInterval(() => {
+                const remainingTime = Math.ceil((gameState.cooldownEndTime - Date.now()) / 1000);
+                if (remainingTime <= 0) {
+                    gameState.cooldown = false;
+                    gameState.cooldownEndTime = 0;
+                    saveGameState();
+                    clearInterval(cooldownInterval);
                 }
-            }
-
-            async function checkSession() {
-                const validCodes = await fetchCodes();
-                if (!validCodes.has(gameState.accessCode)) {
-                    alert('Access code revoked. Please log in again.');
-                    logout();
-                    return false;
-                }
-                return true;
-            }
-
-            function logout() {
-                const sessions = loadSessions();
-                if (gameState.sessionId && sessions[gameState.sessionId]) {
-                    delete sessions[gameState.sessionId];
-                    saveSessions(sessions);
-                }
-                window.location.href = 'index.html';
-            }
-
-            // Initialize the game
-            function initGame() {
                 updateUI();
-                setupEventListeners();
-                setInterval(checkSession, 30000);
-            }
+            }, 200);
+        }
 
-            // Update UI elements
-            function updateUI() {
-                multiplierElement.textContent = gameState.currentMultiplier.toFixed(2) + 'x';
-                betDisplay.textContent = parseInt(betAmountInput.value) + ' coins';
-                balanceElement.textContent = gameState.balance + ' coins';
-                totalBetsElement.textContent = gameState.totalBets;
-                winsElement.textContent = gameState.wins;
-                lossesElement.textContent = gameState.losses;
-                biggestWinElement.textContent = gameState.biggestWin.toFixed(2) + 'x';
-                
-                const cooldownTimer = document.getElementById('cooldown-timer');
-                if (gameState.cooldown) {
-                    betButton.disabled = true;
-                    cooldownTimer.style.display = 'block';
-                    cooldownTimer.textContent = `Next bet in: ${gameState.cooldownTime}s`;
-                } else {
-                    betButton.disabled = gameState.gameRunning || gameState.balance < parseInt(betAmountInput.value);
-                    cooldownTimer.style.display = 'none';
-                }
-                
-                cashoutButton.disabled = !gameState.hasBet || gameState.cashedOut || gameState.crashing;
-            }
-
-            // Setup event listeners
-            function setupEventListeners() {
-                betAmountInput.addEventListener('input', function() {
-                    betSlider.value = betAmountInput.value;
-                    updateUI();
-                });
-
-                betSlider.addEventListener('input', function() {
-                    betAmountInput.value = betSlider.value;
-                    updateUI();
-                });
-
-                betButton.addEventListener('click', async function() {
-                    if (betButton.disabled) return;
-                    betButton.disabled = true;
-                    try {
-                        await placeBet();
-                    } catch (err) {
-                        console.error('Error placing bet:', err);
-                        showStatus(`Error placing bet: ${err.message}`, 'status-crashed');
-                        betButton.disabled = false;
-                    }
-                });
-
-                cashoutButton.addEventListener('click', async function() {
-                    if (cashoutButton.disabled) return;
-                    cashoutButton.disabled = true;
-                    try {
-                        await cashOut();
-                    } catch (err) {
-                        console.error('Error cashing out:', err);
-                        showStatus(`Error cashing out: ${err.message}`, 'status-crashed');
-                        cashoutButton.disabled = gameState.hasBet && !gameState.cashedOut && !gameState.crashing;
-                    }
-                });
-
-                soundToggle.addEventListener('click', toggleSound);
-                logoutBtn.addEventListener('click', logout);
-            }
-
-            // Game functions
-            async function placeBet() {
-                if (gameState.cooldown) {
-                    throw new Error('Please wait for cooldown to finish');
-                }
-
-                const isValid = await checkSession();
-                if (!isValid) {
-                    throw new Error('Invalid session');
-                }
-
-                const betAmount = parseInt(betAmountInput.value);
-                if (isNaN(betAmount) || betAmount <= 0) {
-                    throw new Error('Invalid bet amount');
-                }
-                if (betAmount > gameState.balance) {
-                    throw new Error('Not enough coins');
-                }
-                if (betAmount < 1) {
-                    throw new Error('Minimum bet is 1 coin');
-                }
-
-                gameState.currentBet = betAmount;
-                gameState.balance -= betAmount;
-                gameState.hasBet = true;
-                gameState.cashedOut = false;
-                gameState.totalBets++;
-
-                showStatus('Rocket launching...', 'status-running');
-                startGame();
-            }
-
-            function startGame() {
-                gameState.gameRunning = true;
-                gameState.currentMultiplier = 1.00;
-                gameState.currentTime = 0;
-                gameState.multiplierHistory = [];
-                gameState.crashing = false;
-                gameState.crashPoint = Math.exp(Math.random() * Math.log(10));
-                
-                updateUI();
-                
-                const gameLoop = setInterval(function() {
-                    if (!gameState.gameRunning) {
-                        clearInterval(gameLoop);
-                        return;
-                    }
-
-                    gameState.currentTime += 50;
-
-                    if (!gameState.crashing) {
-                        gameState.currentMultiplier *= 1.01;
-                        if (gameState.currentMultiplier >= gameState.crashPoint) {
-                            gameState.crashPoint = gameState.currentMultiplier;
-                            crash();
-                            gameState.crashing = true;
-                        }
-                    } else {
-                        gameState.currentMultiplier *= 0.95;
-                        if (gameState.currentMultiplier <= 1.00) {
-                            gameState.gameRunning = false;
-                            setTimeout(function() {
-                                gameState.multiplierHistory = [];
-                                drawGraph();
-                                gameState.hasBet = false;
-                                showStatus("Place your bet to start the game!", "status-waiting");
-                            }, 1000);
-                        }
-                    }
-
-                    gameState.multiplierHistory.push(gameState.currentMultiplier);
-                    drawGraph();
-                    updateUI();
-                }, 50);
-            }
-
-            async function cashOut() {
-                if (!gameState.hasBet) {
-                    throw new Error('No active bet');
-                }
-                if (gameState.cashedOut) {
-                    throw new Error('Already cashed out');
-                }
-                if (gameState.crashing) {
-                    throw new Error('Game has crashed');
-                }
-
-                gameState.cashedOut = true;
-                gameState.gameRunning = false;
-                
-                const winnings = Math.floor(gameState.currentBet * gameState.currentMultiplier);
-                gameState.balance += winnings;
-                
-                gameState.wins++;
-                if (gameState.currentMultiplier > gameState.biggestWin) {
-                    gameState.biggestWin = gameState.currentMultiplier;
-                }
-                
-                addToHistory(gameState.currentMultiplier, true);
-                
-                showStatus(`Cashed out at ${gameState.currentMultiplier.toFixed(2)}x! +${winnings} coins`, 'status-waiting');
-                createConfetti();
-                updateUI();
-                
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                gameState.hasBet = false;
-                gameState.multiplierHistory = [];
-                drawGraph();
-                showStatus('Place your bet to start the game!', 'status-waiting');
-                startCooldown(3);
-            }
-
-            function crash() {
-                if (!gameState.cashedOut) {
-                    gameState.losses++;
-                    addToHistory(gameState.crashPoint, false);
-                }
-                
-                showStatus("CRASHED at " + gameState.crashPoint.toFixed(2) + "x!", "status-crashed");
+        function checkCooldown() {
+            if (gameState.cooldown && gameState.cooldownEndTime > Date.now()) {
+                const remainingTime = Math.ceil((gameState.cooldownEndTime - Date.now()) / 1000);
+                startCooldown(remainingTime);
+            } else {
+                gameState.cooldown = false;
+                gameState.cooldownEndTime = 0;
+                saveGameState();
                 updateUI();
             }
+        }
 
-            function drawGraph() {
-                if (gameState.multiplierHistory.length < 1) {
-                    ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+        // Game functions
+        async function placeBet() {
+            if (gameState.cooldown) {
+                throw new Error('Please wait for cooldown to finish');
+            }
+
+            const isValid = await checkSession();
+            if (!isValid) {
+                throw new Error('Invalid session');
+            }
+
+            const betAmount = parseInt(betAmountInput.value);
+            if (isNaN(betAmount) || betAmount <= 0) {
+                throw new Error('Invalid bet amount');
+            }
+            if (betAmount > gameState.balance) {
+                throw new Error('Not enough coins');
+            }
+            if (betAmount < 1) {
+                throw new Error('Minimum bet is 1 coin');
+            }
+
+            gameState.currentBet = betAmount;
+            gameState.balance -= betAmount;
+            gameState.hasBet = true;
+            gameState.cashedOut = false;
+            gameState.totalBets++;
+            saveGameState();
+
+            showStatus('Rocket launching...', 'status-running');
+            startGame();
+        }
+
+        function startGame() {
+            gameState.gameRunning = true;
+            gameState.currentMultiplier = 1.00;
+            gameState.currentTime = 0;
+            gameState.multiplierHistory = [];
+            gameState.crashing = false;
+            gameState.crashPoint = Math.exp(Math.random() * Math.log(10));
+
+            updateUI();
+
+            const gameLoop = setInterval(function() {
+                if (!gameState.gameRunning) {
+                    clearInterval(gameLoop);
                     return;
                 }
 
-                const width = graphCanvas.width;
-                const height = graphCanvas.height;
+                gameState.currentTime += 50;
 
-                ctx.clearRect(0, 0, width, height);
-
-                let maxTime = gameState.currentTime;
-                let maxMulti = Math.max(5, ...gameState.multiplierHistory, gameState.crashPoint || 0);
-
-                const scaleX = width / maxTime;
-                const scaleY = height / maxMulti * 0.9;
-
-                let crashIndex = -1;
-                for (let i = 0; i < gameState.multiplierHistory.length; i++) {
-                    if (gameState.multiplierHistory[i] >= gameState.crashPoint && crashIndex === -1) {
-                        crashIndex = i;
+                if (!gameState.crashing) {
+                    gameState.currentMultiplier *= 1.01;
+                    if (gameState.currentMultiplier >= gameState.crashPoint) {
+                        gameState.crashPoint = gameState.currentMultiplier;
+                        crash();
+                        gameState.crashing = true;
+                    }
+                } else {
+                    gameState.currentMultiplier *= 0.95;
+                    if (gameState.currentMultiplier <= 1.00) {
+                        gameState.gameRunning = false;
+                        setTimeout(function() {
+                            gameState.multiplierHistory = [];
+                            drawGraph();
+                            gameState.hasBet = false;
+                            startCooldown(3);
+                            showStatus("Place your bet to start the game!", "status-waiting");
+                        }, 1000);
                     }
                 }
 
+                gameState.multiplierHistory.push(gameState.currentMultiplier);
+                drawGraph();
+                updateUI();
+            }, 50);
+        }
+
+        async function cashOut() {
+            if (!gameState.hasBet) {
+                throw new Error('No active bet');
+            }
+            if (gameState.cashedOut) {
+                throw new Error('Already cashed out');
+            }
+            if (gameState.crashing) {
+                throw new Error('Game has crashed');
+            }
+
+            gameState.cashedOut = true;
+            gameState.gameRunning = false;
+
+            const winnings = Math.floor(gameState.currentBet * gameState.currentMultiplier);
+            gameState.balance += winnings;
+
+            gameState.wins++;
+            if (gameState.currentMultiplier > gameState.biggestWin) {
+                gameState.biggestWin = gameState.currentMultiplier;
+            }
+
+            addToHistory(gameState.currentMultiplier, true);
+            saveGameState();
+
+            showStatus(`Cashed out at ${gameState.currentMultiplier.toFixed(2)}x! +${winnings} coins`, 'status-waiting');
+            createConfetti();
+            updateUI();
+
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            gameState.hasBet = false;
+            gameState.multiplierHistory = [];
+            drawGraph();
+            showStatus('Place your bet to start the game!', 'status-waiting');
+            startCooldown(3);
+        }
+
+        function crash() {
+            if (!gameState.cashedOut) {
+                gameState.losses++;
+                addToHistory(gameState.crashPoint, false);
+                saveGameState();
+            }
+
+            showStatus("CRASHED at " + gameState.crashPoint.toFixed(2) + "x!", "status-crashed");
+            updateUI();
+        }
+
+        function drawGraph() {
+            if (gameState.multiplierHistory.length < 1) {
+                ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+                return;
+            }
+
+            const width = graphCanvas.width;
+            const height = graphCanvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            let maxTime = gameState.currentTime;
+            let maxMulti = Math.max(5, ...gameState.multiplierHistory, gameState.crashPoint || 0);
+
+            const scaleX = width / maxTime;
+            const scaleY = height / maxMulti * 0.9;
+
+            let crashIndex = -1;
+            for (let i = 0; i < gameState.multiplierHistory.length; i++) {
+                if (gameState.multiplierHistory[i] >= gameState.crashPoint && crashIndex === -1) {
+                    crashIndex = i;
+                }
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            let endGreen = crashIndex === -1 ? gameState.multiplierHistory.length : crashIndex + 1;
+            for (let i = 0; i < endGreen; i++) {
+                const m = gameState.multiplierHistory[i];
+                const t = i * 50;
+                const x = t * scaleX;
+                const y = height - m * scaleY;
+                ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = 'green';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            if (crashIndex !== -1) {
                 ctx.beginPath();
-                ctx.moveTo(0, height);
-                let endGreen = crashIndex === -1 ? gameState.multiplierHistory.length : crashIndex + 1;
-                for (let i = 0; i < endGreen; i++) {
+                const startM = gameState.multiplierHistory[crashIndex];
+                const startT = crashIndex * 50;
+                const startX = startT * scaleX;
+                const startY = height - startM * scaleY;
+                ctx.moveTo(startX, startY);
+                for (let i = crashIndex + 1; i < gameState.multiplierHistory.length; i++) {
                     const m = gameState.multiplierHistory[i];
                     const t = i * 50;
                     const x = t * scaleX;
                     const y = height - m * scaleY;
                     ctx.lineTo(x, y);
                 }
-                ctx.strokeStyle = 'green';
+                ctx.strokeStyle = 'red';
                 ctx.lineWidth = 3;
                 ctx.stroke();
-
-                if (crashIndex !== -1) {
-                    ctx.beginPath();
-                    const startM = gameState.multiplierHistory[crashIndex];
-                    const startT = crashIndex * 50;
-                    const startX = startT * scaleX;
-                    const startY = height - startM * scaleY;
-                    ctx.moveTo(startX, startY);
-                    for (let i = crashIndex + 1; i < gameState.multiplierHistory.length; i++) {
-                        const m = gameState.multiplierHistory[i];
-                        const t = i * 50;
-                        const x = t * scaleX;
-                        const y = height - m * scaleY;
-                        ctx.lineTo(x, y);
-                    }
-                    ctx.strokeStyle = 'red';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                }
-
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(0, height);
-                ctx.lineTo(width, height);
-                ctx.lineTo(width, 0);
-                ctx.stroke();
             }
 
-            function addToHistory(multiplier, isWin) {
-                const historyItem = document.createElement('div');
-                historyItem.classList.add('history-item');
-                historyItem.classList.add(isWin ? 'win' : 'loss');
-                
-                historyItem.innerHTML = '<span>' + (isWin ? 'WIN' : 'LOSS') + '</span>' +
-                                       '<span class="history-multiplier">' + multiplier.toFixed(2) + 'x</span>';
-                
-                historyList.insertBefore(historyItem, historyList.firstChild);
-                
-                if (historyList.children.length > 10) {
-                    historyList.removeChild(historyList.lastChild);
-                }
-                
-                gameState.history.unshift({
-                    multiplier: multiplier,
-                    win: isWin,
-                    timestamp: new Date()
-                });
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            ctx.lineTo(width, height);
+            ctx.lineTo(width, 0);
+            ctx.stroke();
+        }
+
+        function addToHistory(multiplier, isWin) {
+            const historyItem = document.createElement('div');
+            historyItem.classList.add('history-item');
+            historyItem.classList.add(isWin ? 'win' : 'loss');
+
+            historyItem.innerHTML = '<span>' + (isWin ? 'WIN' : 'LOSS') + '</span>' +
+                                   '<span class="history-multiplier">' + multiplier.toFixed(2) + 'x</span>';
+
+            historyList.insertBefore(historyItem, historyList.firstChild);
+
+            if (historyList.children.length > 10) {
+                historyList.removeChild(historyList.lastChild);
             }
 
-            function createConfetti() {
-                for (let i = 0; i < 50; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.classList.add('confetti');
-                    confetti.style.left = Math.random() * 100 + '%';
-                    confetti.style.top = '0';
-                    confetti.style.backgroundColor = 'hsl(' + (Math.random() * 360) + ', 100%, 50%)';
-                    confetti.style.animationDelay = (Math.random() * 1) + 's';
-                    rocketContainer.appendChild(confetti);
-                    
-                    setTimeout(function() {
-                        confetti.remove();
-                    }, 2000);
-                }
-            }
-
-            function showStatus(message, statusClass) {
-                gameStatus.textContent = message;
-                gameStatus.className = 'game-status ' + statusClass;
-            }
-
-            function toggleSound() {
-                gameState.soundEnabled = !gameState.soundEnabled;
-                soundToggle.classList.toggle('muted', !gameState.soundEnabled);
-            }
-
-            function startCooldown(seconds) {
-                gameState.cooldown = true;
-                gameState.cooldownTime = seconds;
-                updateUI();
-
-                const cooldownInterval = setInterval(() => {
-                    gameState.cooldownTime--;
-                    updateUI();
-
-                    if (gameState.cooldownTime <= 0) {
-                        clearInterval(cooldownInterval);
-                        gameState.cooldown = false;
-                        updateUI();
-                    }
-                }, 1000);
-            }
-
-            window.addEventListener('load', async function() {
-                const params = new URLSearchParams(window.location.search);
-                gameState.sessionId = params.get('session');
-                gameState.accessCode = params.get('code');
-                
-                if (!gameState.accessCode) {
-                    alert('Invalid access code. Please log in again.');
-                    window.location.href = 'index.html';
-                    return;
-                }
-
-                const validCodes = await fetchCodes();
-                if (!validCodes.has(gameState.accessCode)) {
-                    alert('Access code revoked. Please log in again.');
-                    logout();
-                    return;
-                }
-
-                initGame();
+            gameState.history.unshift({
+                multiplier: multiplier,
+                win: isWin,
+                timestamp: new Date()
             });
-        </script>
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '0';
+                confetti.style.backgroundColor = 'hsl(' + (Math.random() * 360) + ', 100%, 50%)';
+                confetti.style.animationDelay = (Math.random() * 1) + 's';
+                rocketContainer.appendChild(confetti);
+
+                setTimeout(function() {
+                    confetti.remove();
+                }, 2000);
+            }
+        }
+
+        function showStatus(message, statusClass) {
+            gameStatus.textContent = message;
+            gameStatus.className = 'game-status ' + statusClass;
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            soundToggle.classList.toggle('muted', !gameState.soundEnabled);
+        }
+
+        window.addEventListener('load', async function() {
+            const params = new URLSearchParams(window.location.search);
+            gameState.sessionId = params.get('session');
+            gameState.accessCode = params.get('code');
+
+            if (!gameState.accessCode) {
+                alert('Invalid access code. Please log in again.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const validCodes = await fetchCodes();
+            if (!validCodes.has(gameState.accessCode)) {
+                alert('Access code revoked. Please log in again.');
+                logout();
+                return;
+            }
+
+            initGame();
+        });
+    </script>
 </body>
 </html>
