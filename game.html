@@ -604,6 +604,26 @@
                 }
             }
 
+            // Enforce single active session per access code
+            function setActiveSession(accessCode, sessionId) {
+                const sessions = loadSessions();
+                // If accessCode already has a different session, deny new session
+                if (sessions[accessCode] && sessions[accessCode] !== sessionId) {
+                    return false;
+                }
+                sessions[accessCode] = sessionId;
+                saveSessions(sessions);
+                return true;
+            }
+
+            function clearActiveSession(accessCode) {
+                const sessions = loadSessions();
+                if (sessions[accessCode]) {
+                    delete sessions[accessCode];
+                    saveSessions(sessions);
+                }
+            }
+
             async function fetchCodes() {
                 try {
                     const response = await fetch(GITHUB_CODES_URL + '?t=' + Date.now());
@@ -628,8 +648,8 @@
 
             function logout() {
                 const sessions = loadSessions();
-                if (gameState.sessionId && sessions[gameState.sessionId]) {
-                    delete sessions[gameState.sessionId];
+                if (gameState.accessCode && sessions[gameState.accessCode]) {
+                    delete sessions[gameState.accessCode];
                     saveSessions(sessions);
                 }
                 window.location.href = 'index.html';
@@ -979,6 +999,14 @@
                 if (!validCodes.has(gameState.accessCode)) {
                     alert('Access code revoked. Please log in again.');
                     logout();
+                    return;
+                }
+
+                // Enforce single active session per access code
+                const sessionSet = setActiveSession(gameState.accessCode, gameState.sessionId);
+                if (!sessionSet) {
+                    alert('This access code already has an active session. Please log out from other devices first.');
+                    window.location.href = 'index.html';
                     return;
                 }
 
