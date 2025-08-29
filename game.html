@@ -891,6 +891,12 @@
                 gameState.sessionId = params.get('session');
                 gameState.accessCode = params.get('code');
                 
+                // Remove sensitive parameters from URL after reading them
+                if (window.location.search) {
+                    const cleanUrl = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+                
                 if (!gameState.accessCode) {
                     alert('Invalid access code. Please log in again.');
                     window.location.href = 'index.html';
