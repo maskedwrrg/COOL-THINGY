@@ -1010,6 +1010,11 @@
                     return;
                 }
 
+                // Add beforeunload event to clear session when user leaves the page
+                window.addEventListener('beforeunload', function() {
+                    clearActiveSession(gameState.accessCode);
+                });
+
                 initGame();
             });
         </script>
