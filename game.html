@@ -737,13 +737,13 @@
                 showStatus(`Cashed out at ${gameState.currentMultiplier.toFixed(2)}x! +${winnings} coins`, 'status-waiting');
                 createConfetti();
                 updateUI();
+                startCooldown(3);
                 
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 gameState.hasBet = false;
                 gameState.multiplierHistory = [];
                 drawGraph();
                 showStatus('Place your bet to start the game!', 'status-waiting');
-                startCooldown(3);
             }
 
             function crash() {
