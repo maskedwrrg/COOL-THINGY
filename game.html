@@ -36,6 +36,8 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
+            display: flex;
+            justify-content: center;
         }
 
         .header {
@@ -59,9 +61,10 @@
 
         .game-container {
             display: grid;
-            grid-template-columns: 1fr 400px;
+            grid-template-columns: auto 400px;
             gap: 30px;
             margin-bottom: 30px;
+            justify-content: center;
         }
 
         .game-area {
@@ -70,6 +73,7 @@
             padding: 30px;
             border: 2px solid var(--accent-color);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 800px;
         }
 
         .multiplier-display {
